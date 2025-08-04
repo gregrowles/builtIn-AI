@@ -93,7 +93,7 @@
 
   }
 
-  // Function to run the summarizer
+  // Function to run the translator
   async function runTranslator( inpText ) {
 
     await translatorInstance.init( document.getElementById('languageFrom').value, document.getElementById('languageTo').value );
@@ -115,13 +115,12 @@
 
   }
 
-  // Function to run the rewriter
+  // Function to run the prompt
   async function runPrompt( inpText ) {
 
     await promptLanguageModel.init();
 
-    // let jsonPrompt = { role: 'user', 'content': inpText };
-
+    // let jsonPrompt = { role: 'user', 'content': inpText }; // for stream only
     const summary = await promptLanguageModel.prompt( inpText );
 
     renderMarkdownToHtml( summary, "outputMarkdown" );
