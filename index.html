@@ -1,0 +1,201 @@
+<html>
+
+<head>
+    <title>My Web Page</title>
+    <!-- <link rel="stylesheet" type="text/css" href="styles.css"> -->
+
+    <!-- <script src="geminiSummarizer.js"></script> -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.0/showdown.min.js"></script>
+
+</head>
+
+<body>
+
+    <table style="width:100%;height:calc(100% - 15px)">
+        <tr>
+            <td style="width:50%; height:calc(100% - 25px)">
+                gemini-NANO
+                <textarea id="inputText" rows="10" cols="50" style="width:100%;height:calc(100% - 45px);" placeholder="Enter text to summarize..."></textarea>
+                <div>
+                    <button id="summarizeButton" style="width:100%;height:100%;background-color:lightblue;">Summarize</button>
+                    <div style="display: flex;">
+                        <button id="translateButton" style="width:calc(100% - 160px);height:100%;background-color:lightgreen;">Translate</button>
+                        <label>from</label> <select id="languageFrom" style="">
+                            <option value="en">English</option>
+                            <option value="fr">French</option>
+                            <option value="es">Spanish</option>
+                            <option value="de">German</option>
+                        </select>
+                        <label>to</label> <select id="languageTo" style="">
+                            <option value="fr">French</option>
+                            <option value="es">Spanish</option>
+                            <option value="de">German</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                    <button id="rewriteButton" style="width:100%;height:100%;background-color:lightblue;">ReWrite</button>
+                    <button id="promptButton" style="width:100%;height:100%;background-color:lightblue;">Prompt Reply (JSON)</button>
+                </div>
+            </td>
+            <td style="width:50%;height:calc(100% - 25px);">
+                output
+                <div id="outputMarkdown"
+                style="align-content:flex-start;border-radius: 8px;border: 4px solid salmon;background-color:rgba(127, 255, 212,0.5);width:100%;height:100%;"></div>
+            </td>
+        </tr>
+
+    </table>
+
+</body>
+
+<script type="module">
+
+  import { GeminiSummarizer } from './geminiSummarizer.js';
+  import { GeminiTranslator } from './geminiTranslator.js';
+  import { GeminiRewriter } from './geminiRewriter.js';
+  import { GeminiPrompt } from './geminiPrompt.js';
+
+  const summarizerInstance = new GeminiSummarizer();
+  const translatorInstance = new GeminiTranslator();
+  const rewriterInstance = new GeminiRewriter();
+  const promptLanguageModel = new GeminiPrompt();
+
+
+  function renderMarkdownToHtml(inputText, targetElementId) {
+
+    if (typeof showdown === 'undefined') {
+        console.error('ShowdownJS is not loaded. Please include showdown.min.js.');
+        return;
+    }
+
+    const converter = new showdown.Converter();
+    const html = converter.makeHtml(inputText);
+    const targetEl = document.getElementById( targetElementId );
+
+    if (!targetEl) {
+        console.error(`Element with ID "${targetElementId}" not found.`);
+        return;
+    }
+
+    targetEl.innerHTML = html;
+  }
+
+
+  // Function to run the summarizer
+  async function runSummarizer( inpText ) {
+
+    await summarizerInstance.init();
+
+    const summary = await summarizerInstance.summarize( inpText );
+
+    renderMarkdownToHtml( summary, "outputMarkdown" );
+
+  }
+
+  // Function to run the summarizer
+  async function runTranslator( inpText ) {
+
+    await translatorInstance.init( document.getElementById('languageFrom').value, document.getElementById('languageTo').value );
+
+    const summary = await translatorInstance.translate( inpText );
+
+    renderMarkdownToHtml( summary, "outputMarkdown" );
+
+  }
+
+  // Function to run the rewriter
+  async function runRewriter( inpText ) {
+
+    await rewriterInstance.init();
+
+    const summary = await rewriterInstance.rewrite( inpText );
+
+    renderMarkdownToHtml( summary, "outputMarkdown" );
+
+  }
+
+  // Function to run the rewriter
+  async function runPrompt( inpText ) {
+
+    await promptLanguageModel.init();
+
+    // let jsonPrompt = { role: 'user', 'content': inpText };
+
+    const summary = await promptLanguageModel.prompt( inpText );
+
+    renderMarkdownToHtml( summary, "outputMarkdown" );
+
+  }
+  // async function runPromptStream( inpText ) {
+
+  //   await promptLanguageModel.init();
+
+  //   let jsonPrompt = { role: 'user', 'content': inpText };
+
+  //   const summary = await promptLanguageModel.promptStream( jsonPrompt, renderMarkdownToHtml, "outputMarkdown" );
+
+  // }
+
+  // attach event listener to the input textarea
+  document.getElementById("summarizeButton").addEventListener("click", function() {
+
+    // clear the output area
+    document.getElementById("outputMarkdown").innerHTML = "Generating summary...";
+
+    runSummarizer( document.getElementById("inputText").value );
+
+  });
+
+
+  // attach event listener to the input textarea
+  document.getElementById("translateButton").addEventListener("click", function() {
+
+    // clear the output area
+    document.getElementById("outputMarkdown").innerHTML = "Translating...";
+
+    runTranslator( document.getElementById("inputText").value );
+
+  });
+
+
+  if ('Rewriter' in self)
+  {
+    // attach event listener to the input textarea
+    document.getElementById("rewriteButton").addEventListener("click", function() {
+
+      // clear the output area
+      document.getElementById("outputMarkdown").innerHTML = "Generating summary...";
+
+      runRewriter( document.getElementById("inputText").value );
+
+    });
+  } else {
+    console.error("Rewriter is not available in this environment.");
+    document.getElementById("rewriteButton").disabled = true;
+  }
+  
+  if ('prompt' in self)
+  {
+    // attach event listener to the input textarea
+    document.getElementById("promptButton").addEventListener("click", function() {
+
+      // clear the output area
+      document.getElementById("outputMarkdown").innerHTML = "Thinking...";
+
+      runPrompt( document.getElementById("inputText").value );
+
+    });
+  } else {
+    console.error("Rewriter is not available in this environment.");
+    document.getElementById("promptButton").disabled = true;
+  }
+
+
+  document.getElementById("inputText").innerText = 'The sun is the star at the center of the Solar System. It is a nearly perfect sphere of hot plasma, heated to incandescence by nuclear fusion.';
+
+
+</script>
+
+
+</html>
