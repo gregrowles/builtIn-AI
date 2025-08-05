@@ -1,6 +1,7 @@
 export class GeminiRewriter {
-  constructor() {
+  constructor( onResponse ) {
     this.rewriter = null;
+    this.onResponse = onResponse || null;
   }
 
   // Initializes the rewriter (must be called once)
@@ -14,8 +15,9 @@ export class GeminiRewriter {
         length: 'shorter', // "shorter", "as-is" (default), "longer"
         monitor(m) {
             m.addEventListener('downloadprogress', (e) => {
-            const percent = Math.round(e.loaded * 100);
-            console.log(`rewriter download progress: ${percent}%`);
+                const percent = Math.round(e.loaded * 100);
+                console.log(`rewriter download progress: ${percent}%`);
+                if( this.onResponse ) this.onResponse(  `[x] rewriter download progress: ${percent}%` );
             });
         }
     };

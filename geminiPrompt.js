@@ -1,6 +1,8 @@
 export class GeminiPrompt {
-  constructor() {
+  constructor( controller, onResponse ) {
     this.promptLanguageModel = null;
+    this.controller = controller || null;
+    this.onResponse = onResponse || null;
   }
 
   // Initializes the summarizer (must be called once)
@@ -17,6 +19,8 @@ export class GeminiPrompt {
         ],   
     };
 
+    if ( this.controller ) options[ 'signal' ] = this.controller.signal;
+
     // Initializing a new session must either specify both `topK` and `temperature` or neither of them.
     // const slightlyHighTemperatureSession = await LanguageModel.create({
     //     temperature: Math.max(params.defaultTemperature * 1.2, 2.0),
@@ -25,7 +29,8 @@ export class GeminiPrompt {
 
     this.promptLanguageModel = await LanguageModel.create( options );
 
-    console.log("Prompt initialized.");
+    if( this.onResponse ) this.onResponse(  "[x] promptLanguageModel initialized." );
+    console.log("promptLanguageModel initialized.");
   }
 
   // responde to prompt
@@ -33,7 +38,8 @@ export class GeminiPrompt {
 
   async prompt( promptObj ) {
     if (!this.promptLanguageModel) {
-      throw new Error("Prompt not initialized. Call init() first.");
+    if( this.onResponse ) this.onResponse(  "[ ] promptLanguageModel not initialized. Call init() first." )
+      throw new Error("promptLanguageModel not initialized. Call init() first.");
     }
 
     try {
@@ -41,7 +47,35 @@ export class GeminiPrompt {
       return result.summary || result;
     } catch (error) {
       console.error("LanguageModel (prompt) failed:", error);
+      if (this.onResponse) {
+        this.onResponse("promptLanguageModel (prompt) failed: " + error.message);
+      }
       throw error;
     }
   }
+
+  async promptStream(promptObj, onChunk) {
+    if (!this.promptLanguageModel) {
+    if( this.onResponse ) this.onResponse(  "promptLanguageModel not initialized. Call init() first." )
+      throw new Error("promptLanguageModel not initialized. Call init() first.");
+    }
+
+    try {
+      const stream = await this.promptLanguageModel.promptStreaming( promptObj );
+      let allChunks = '';
+      for await (const chunk of stream) {
+        if (typeof onChunk === 'function') {
+          allChunks += chunk;
+          onChunk(allChunks);
+        }
+      }
+    } catch (error) {
+      console.error("promptStream failed:", error);
+      if (this.onResponse) {
+        this.onResponse("promptLanguageModel (promptStream) failed: " + error.message);
+      }
+      throw error;
+    }
+  }
+
 }

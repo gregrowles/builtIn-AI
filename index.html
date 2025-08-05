@@ -1,200 +1,160 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>My Web Page</title>
-    <!-- <link rel="stylesheet" type="text/css" href="styles.css"> -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini (builtIn AI) Interface</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.0/showdown.min.js"></script>
+  <script type="module" src="geminiApp.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-    <!-- <script src="geminiSummarizer.js"></script> -->
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.0/showdown.min.js"></script>
+    .container {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
 
+    @media (min-width: 768px) {
+      .container {
+        flex-direction: row;
+      }
+    }
+
+    .panel {
+      flex: 1;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      overflow-y: auto;
+    }
+
+    .panel.input {
+      background: #f9f9f9;
+    }
+
+    .panel.output {
+      background: #fff;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      resize: vertical;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    .inputsRow {
+      display: flex;
+      gap: 1em;
+      vertical-align: middle;
+      align-items: center;
+    }
+    button, select {
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
+
+    #responseOutput {
+      white-space: pre-wrap;
+      margin-top: 1rem;
+      gap: 4px;
+      display: grid
+    }
+
+    #responseOutput > p {
+        margin: 4px;
+    }
+
+  </style>
 </head>
-
 <body>
 
-    <table style="width:100%;height:calc(100% - 15px)">
-        <tr>
-            <td style="width:50%; height:calc(100% - 25px)">
-                gemini-NANO
-                <textarea id="inputText" rows="10" cols="50" style="width:100%;height:calc(100% - 45px);" placeholder="Enter text to summarize..."></textarea>
-                <div>
-                    <button id="summarizeButton" style="width:100%;height:100%;background-color:lightblue;">Summarize</button>
-                    <div style="display: flex;">
-                        <button id="translateButton" style="width:calc(100% - 160px);height:100%;background-color:lightgreen;">Translate</button>
-                        <label>from</label> <select id="languageFrom" style="">
-                            <option value="en">English</option>
-                            <option value="fr">French</option>
-                            <option value="es">Spanish</option>
-                            <option value="de">German</option>
-                        </select>
-                        <label>to</label> <select id="languageTo" style="">
-                            <option value="fr">French</option>
-                            <option value="es">Spanish</option>
-                            <option value="de">German</option>
-                            <option value="en">English</option>
-                        </select>
-                    </div>
-                    <button id="rewriteButton" style="width:100%;height:100%;background-color:lightblue;">ReWrite</button>
-                    <button id="promptButton" style="width:100%;height:100%;background-color:lightblue;">Prompt Reply (JSON)</button>
-                </div>
-            </td>
-            <td style="width:50%;height:calc(100% - 25px);">
-                output
-                <div id="outputMarkdown"
-                style="align-content:flex-start;border-radius: 8px;border: 4px solid salmon;background-color:rgba(127, 255, 212,0.5);width:100%;height:100%;"></div>
-            </td>
-        </tr>
+  <div class="container">
+    <!-- Input Panel -->
+    <div class="panel input">
+      <h2>
+        Input Text 
+      </h2>
+      <textarea id="inputText" placeholder="What is today's date?"></textarea>
+      <div class="inputsRow">
+        <label>Input Action</label>
+        <select id="actionSelect">
+            <option value="summarize">Summarize</option>
+            <option value="summarizeStream">Summarize (Stream)</option>
+            <option value="translate">Translate (en-fr)</option>
+            <option value="rewrite">Rewrite</option>
+            <option value="prompt" selected>Prompt</option>
+            <option value="promptStream">Prompt (Stream)</option>
+        </select>
+        <button id="submit">Submit to AI</button>
+        <button id="checkAvail" style="margin: 0 0 0 auto">check Availability</button>
+      </div>
+    </div>
 
-    </table>
+    <!-- Output Panel -->
+    <div class="panel output">
+      <h2>Gemini Nano Response</h2>
+      <div id="responseOutput">Awaiting input...</div>
+    </div>
+  </div>
 
-</body>
+<script type="text/javascript">
 
-<script type="module">
+    async function submitToAI() {
+      const action = document.getElementById('actionSelect').value;
+      const inputText = document.getElementById('inputText').value.length ? document.getElementById('inputText').value : document.getElementById('inputText').getAttribute('placeholder');
+      const output = document.getElementById('responseOutput');
+      output.textContent = 'Thinking...';
 
-  import { GeminiSummarizer } from './geminiSummarizer.js';
-  import { GeminiTranslator } from './geminiTranslator.js';
-  import { GeminiRewriter } from './geminiRewriter.js';
-  import { GeminiPrompt } from './geminiPrompt.js';
+      setTimeout(() => {
+        
+        if ( action === 'summarize' ) window.runSummarizer( inputText );
+        if ( action === 'summarizeStream' ) window.runSummarizerStream( inputText );
+        if ( action === 'translate' ) window.runTranslator( inputText );
+        if ( action === 'rewrite' ) window.runRewriter( inputText );
+        if ( action === 'prompt' ) window.runPrompt( inputText );
+        if ( action === 'promptStream' ) window.runPromptStream( inputText );
+        
+      }, 1000);
+    }
+    async function checkModelAvail() {
+      const inputText = document.getElementById('inputText').value;
+      const output = document.getElementById('responseOutput');
+      output.textContent = 'Checking...';
 
-  const summarizerInstance = new GeminiSummarizer();
-  const translatorInstance = new GeminiTranslator();
-  const rewriterInstance = new GeminiRewriter();
-  const promptLanguageModel = new GeminiPrompt();
+      // Replace this mock with your real streaming or async AI logic
+      setTimeout(() => {
+        let result = '[' + ( 'Summarizer' in self ? 'x' : '  ' ) + '] Summarize  <br>' +
+                     '[' + ( 'Summarizer' in self ? 'x' : '  ' ) + '] Summarize (Stream)  <br>' +
+                     '[' + ( 'Translator' in self ? 'x' : '  ' ) + '] Translate (en-fr) <br>' +
+                     '[' + ( 'Rewriter' in self ? 'x' : '  ' ) + '] Rewrite  <br>' +
+                     '[' + ( 'prompt' in self ? 'x' : '  ' ) + '] Prompt  <br>' + 
+                     '[' + ( 'prompt' in self ? 'x' : '  ' ) + '] Prompt (Stream)';
 
-
-  function renderMarkdownToHtml(inputText, targetElementId) {
-
-    if (typeof showdown === 'undefined') {
-        console.error('ShowdownJS is not loaded. Please include showdown.min.js.');
-        return;
+        output.innerHTML = window.markdownReturn( result );
+      }, 1000);
     }
 
-    const converter = new showdown.Converter();
-    const html = converter.makeHtml(inputText);
-    const targetEl = document.getElementById( targetElementId );
+    document.getElementById( 'submit' ).onclick = function() {
+        submitToAI();
+    };
 
-    if (!targetEl) {
-        console.error(`Element with ID "${targetElementId}" not found.`);
-        return;
-    }
-
-    targetEl.innerHTML = html;
-  }
-
-
-  // Function to run the summarizer
-  async function runSummarizer( inpText ) {
-
-    await summarizerInstance.init();
-
-    const summary = await summarizerInstance.summarize( inpText );
-
-    renderMarkdownToHtml( summary, "outputMarkdown" );
-
-  }
-
-  // Function to run the translator
-  async function runTranslator( inpText ) {
-
-    await translatorInstance.init( document.getElementById('languageFrom').value, document.getElementById('languageTo').value );
-
-    const summary = await translatorInstance.translate( inpText );
-
-    renderMarkdownToHtml( summary, "outputMarkdown" );
-
-  }
-
-  // Function to run the rewriter
-  async function runRewriter( inpText ) {
-
-    await rewriterInstance.init();
-
-    const summary = await rewriterInstance.rewrite( inpText );
-
-    renderMarkdownToHtml( summary, "outputMarkdown" );
-
-  }
-
-  // Function to run the prompt
-  async function runPrompt( inpText ) {
-
-    await promptLanguageModel.init();
-
-    // let jsonPrompt = { role: 'user', 'content': inpText }; // for stream only
-    const summary = await promptLanguageModel.prompt( inpText );
-
-    renderMarkdownToHtml( summary, "outputMarkdown" );
-
-  }
-  // async function runPromptStream( inpText ) {
-
-  //   await promptLanguageModel.init();
-
-  //   let jsonPrompt = { role: 'user', 'content': inpText };
-
-  //   const summary = await promptLanguageModel.promptStream( jsonPrompt, renderMarkdownToHtml, "outputMarkdown" );
-
-  // }
-
-  // attach event listener to the input textarea
-  document.getElementById("summarizeButton").addEventListener("click", function() {
-
-    // clear the output area
-    document.getElementById("outputMarkdown").innerHTML = "Generating summary...";
-
-    runSummarizer( document.getElementById("inputText").value );
-
-  });
-
-
-  // attach event listener to the input textarea
-  document.getElementById("translateButton").addEventListener("click", function() {
-
-    // clear the output area
-    document.getElementById("outputMarkdown").innerHTML = "Translating...";
-
-    runTranslator( document.getElementById("inputText").value );
-
-  });
-
-
-  if ('Rewriter' in self)
-  {
-    // attach event listener to the input textarea
-    document.getElementById("rewriteButton").addEventListener("click", function() {
-
-      // clear the output area
-      document.getElementById("outputMarkdown").innerHTML = "Generating summary...";
-
-      runRewriter( document.getElementById("inputText").value );
-
-    });
-  } else {
-    console.error("Rewriter is not available in this environment.");
-    document.getElementById("rewriteButton").disabled = true;
-  }
-  
-  if ('prompt' in self)
-  {
-    // attach event listener to the input textarea
-    document.getElementById("promptButton").addEventListener("click", function() {
-
-      // clear the output area
-      document.getElementById("outputMarkdown").innerHTML = "Thinking...";
-
-      runPrompt( document.getElementById("inputText").value );
-
-    });
-  } else {
-    console.error("Rewriter is not available in this environment.");
-    document.getElementById("promptButton").disabled = true;
-  }
-
-
-  document.getElementById("inputText").innerText = 'The sun is the star at the center of the Solar System. It is a nearly perfect sphere of hot plasma, heated to incandescence by nuclear fusion.';
-
+    document.getElementById( 'checkAvail' ).onclick = function() {
+        checkModelAvail();
+    };
 
 </script>
 
-
+</body>
 </html>

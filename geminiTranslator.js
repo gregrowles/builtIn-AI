@@ -1,6 +1,7 @@
 export class GeminiTranslator {
-  constructor() {
+  constructor( onResponse ) {
     this.translator = null;
+    this.onResponse = onResponse || null;
   }
 
   // Initializes the translator (must be called once)
@@ -12,17 +13,21 @@ export class GeminiTranslator {
         targetLanguage: targetLang || 'fr',
         monitor(m) {
             m.addEventListener('downloadprogress', (e) => {
-            console.log(`Translator Downloaded ${e.loaded * 100}%`);
+                const percent = Math.round(e.loaded * 100);
+                console.log(`translator download progress: ${percent}%`);
+              if( this.onResponse ) this.onResponse(  `[x] translator download progress: ${percent}%` );
             });
         },
     });
 
     console.log("Translator initialized.");
+    if( this.onResponse ) this.onResponse(  `[x] translator initialized` );
   }
 
   // Translate text
   async translate(text) {
     if (!this.translator) {
+      if( this.onResponse ) this.onResponse(  `Translator not initialized. Call init() first` );
       throw new Error("Translator not initialized. Call init() first.");
     }
 
@@ -30,7 +35,8 @@ export class GeminiTranslator {
       const result = await this.translator.translate(text);
       return result.summary || result;
     } catch (error) {
-      console.error("Summarization failed:", error);
+      console.error("Translator failed:", error);
+      if( this.onResponse ) this.onResponse(  `Translator failed. ${error.message}` );
       throw error;
     }
   }
