@@ -8,7 +8,7 @@ export class GeminiTranslator {
   // Initializes the translator (must be called once)
   async init( sourceLang = 'en', targetLang = 'fr' ) {
     if (this.translator) return;
-    if( this.onResponse ) this.onResponse(  `creating *translator* model-feature` );
+    if( this.onResponse ) this.onResponse(  `creating *translator*` );
     this.translator = await Translator.create({
         sourceLanguage: sourceLang || 'en',
         targetLanguage: targetLang || 'fr',
@@ -22,7 +22,7 @@ export class GeminiTranslator {
     });
 
     console.log("Translator initialized.");
-    if( this.onResponse ) this.onResponse(  `[x] translator initialized` );
+    if( this.onResponse ) this.onResponse(  `Translator initialized` );
   }
 
   // Translate text

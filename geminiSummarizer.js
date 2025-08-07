@@ -8,10 +8,10 @@ export class GeminiSummarizer {
   // Initializes the summarizer (must be called once)
   async init() {
     if (this.summarizer) return;
-    if( this.onResponse ) this.onResponse(  `creating *summarizer* model-feature` );
+    if( this.onResponse ) this.onResponse(  `creating *summarizer*` );
     const options_healthJournal_keypoints_markdown_short = {
       sharedContext: 'This is a health journal article',
-      type: 'key-points', //"tldr", "teaser", "key-points" (default), "headline"
+      type: 'tldr', //"tldr", "teaser", "key-points" (default), "headline"
       format: 'markdown', // "markdown" (default), "plain-text"
       length: 'short', // varies for "type" above
       monitor(m) {
@@ -30,15 +30,16 @@ export class GeminiSummarizer {
   }
 
   // Summarize text
-  async summarize(text) {
+  async summarize(text, callback ) {
     if (!this.summarizer) {
       if( this.onResponse ) this.onResponse(  `Summarizer not initialized. Call init() first.` )
       throw new Error("Summarizer not initialized. Call init() first.");
     }
-
+    this.running = true;
     try {
       const result = await this.summarizer.summarize(text);
-      return result.summary || result;
+      if (callback && typeof callback === 'function') callback( ( result.summary || result ) );
+      else return  ( result.summary || result );
     } catch (error) {
       console.error("Summarization failed:", error);
       if( this.onResponse ) this.onResponse(  `summarizer.summarize failed. ${error.message}` )
@@ -47,17 +48,19 @@ export class GeminiSummarizer {
   }
 
   // Summarize streaming
-  async summarizeStream(text, context, onChunk) {
+  async summarizeStream(text, context, onChunk, callback ) {
     if (!this.summarizer) {
       if( this.onResponse ) this.onResponse(  `summarizer.summarize failed. ${error.message}` )
       throw new Error("Summarizer not initialized. Call init() first.");
     }
 
+    let allChunks = '';
+    this.running = true;
+
     try {
       const stream = await this.summarizer.summarizeStreaming(text, {
         context: context || 'This article is intended for health professionals',
       });
-      let allChunks = '';
       for await (const chunk of stream) {
         if (typeof onChunk === 'function') {
           allChunks += chunk;
@@ -69,6 +72,8 @@ export class GeminiSummarizer {
       if( this.onResponse ) this.onResponse(  `summarizer.summarizeStreaming failed. ${error.message}` )
       throw error;
     }
+    if (callback && typeof callback === 'function') callback( allChunks );
+    this.running = false;
   }
 
 }

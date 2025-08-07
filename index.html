@@ -6,235 +6,7 @@
   <title>Gemini (builtIn AI) Interface</title>
   <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
   <script type="module" src="geminiApp.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    .container {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      overflow: hidden;
-    }
-    @media (max-width: 767px) {
-      .panel {
-        padding: 1rem;
-      }
-      .panel.input {
-        overflow: hidden;
-        max-height: 380px;
-      }
-      .panel.output {
-        height: fit-content;
-      }
-     #responseOutput {
-        height: calc(100vh - 480px);
-      }
-      textarea {
-        height: 210px;
-      }
-      .inputsRow {
-        margin: auto;
-        height: 70px !important;
-        overflow: auto;
-      }
-    }
-    @media (min-width: 768px) {
-      .container {
-        flex-direction: row;
-      }
-      .panel {
-        padding: 2rem;
-      }
-      .panel.input {
-        overflow: hidden;
-        height: 100vh;
-      }
-      .panel.output {
-        height: calc(100vh + 0.1em);
-        filter: drop-shadow(4px 0px 6px #888);
-      }
-      textarea {
-        height: calc(100vh - 215px) !important;
-      }
-      .inputsRow {
-        margin: auto 0;
-        height: 75px;
-      }
-      #responseOutput {
-        height: calc(100% - 102px);
-      }
-    }
-
-    .panel {
-      flex: 1;
-      border: 1px solid #ccc;
-    }
-
-    .panel.input {
-      background: #f9f9f9;
-      overflow-y: auto;
-    }
-
-    .panel.output {
-      background: #fff;
-      /* height: max-content; */
-      overflow-y: hidden;
-    }
-
-    textarea {
-      width: 100%;
-      height: 200px;
-      resize: vertical;
-      padding: 0.5rem;
-      font-size: 1rem;
-      border-radius: 6px
-    }
-    textarea:focus {
-      outline: none;
-      border-color: #007bff;
-      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-    }
-    .inputsRow {
-      display: flex;
-      gap: 1em;
-      vertical-align: middle;
-      align-items: center;
-    }
-    button, select {
-      margin-top: 0.5rem;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      height: 56px;
-    }
-
-    #responseOutput {
-      overflow-y: auto;
-      white-space: pre-wrap;
-      border-radius: 6px;
-      display: block;
-      border: 2px solid #D7EC37;
-      /* background-image: linear-gradient(to bottom, #FEFEF6, #FBFDEC); */
-      background-color: #FEFEF6;
-      padding: 8px 8px ;
-    }
-
-    #responseOutput > p {
-        margin: 4px;
-    }
-
-    #responseOutput table {
-      width: fit-content;
-      font-size: 0.8em;
-      /* width: 100%; */
-      border-collapse: collapse;
-      margin: 20px 0;
-    }
-
-    #responseOutput pre {
-
-      display: block;
-      padding: 9.5px;
-      margin: 0 0 10px;
-      font-size: 13px;
-      line-height: 1.42857143;
-      color: #333;
-      word-break: break-all;
-      word-wrap: break-word;
-      background-color: #f5f5f5;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-
-    }
-
-    #responseOutput th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-
-    #responseOutput th {
-      background-color: #f2f2f2;
-    }
-
-    #responseOutput tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-
-    .floatButton {
-      filter: drop-shadow(-1px 0px 3px #aaa);
-      background: #fff;
-      border-radius: 2px;
-      cursor: pointer;
-    }
-    .floatButton:hover {
-      filter: drop-shadow(-1px 0px 3px #bbb);
-      background: #f5f5f5;
-    }
-    .floatTab {
-      max-width: 63px;
-      height: 33px;
-      padding: 8px;
-      font-size: 1.25em;
-      margin: auto 0;
-      position: static;
-      align-content: center;
-      align-self: center;
-      text-align: -webkit-center;
-      font-size: 0.9em;
-      overflow-x: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      border-radius: 10px 10px 0 0;
-      background-image: linear-gradient(to bottom, #fff, #F9FBDE);
-    }
-
-    /* #stop {
-      display: none;
-      width: 33px;
-      height: 33px;
-      padding: 1px 8px;
-      font-size: 1.25em;
-      margin: auto 0;
-      position: relative;
-      top: 2px;
-    } */
-    #checkAvail {
-      width: 63px;
-      height: 33px;
-      padding: 8px;
-      font-size: 1.25em;
-      margin: auto 8px auto 0;
-      position: static;
-      align-content: center;
-      align-self: center;
-      text-align: -webkit-center;
-      font-size: 0.9em;
-    }
-
-    .backgroundBricks {
-      background-color: rgb(237, 237, 237);
-      background-image: linear-gradient(335deg, rgb(247, 247, 247) 24px, transparent 24px), linear-gradient(155deg, rgb(255, 255, 255) 24px, transparent 24px), linear-gradient(335deg, rgb(247, 247, 247) 24px, transparent 24px), linear-gradient(155deg, rgb(255, 255, 255) 24px, transparent 24px);
-      background-size: 58px 58px;
-      background-position: 0px 3px, 2px 34px, 32px 32px, 34px 5px;
-    }
-
-    #tabList {
-      padding: 0 3px;
-      display: flex;
-      /* gap: 4px; */
-    }
-
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
@@ -270,7 +42,7 @@
     <div class="panel output">
       <h2>AI Response</h2>
       <div id="tabList">
-        <div id="checkAvail" class="floatButton">info</div>
+        <div id="about" class="floatButton">about</div>
       </div>
       <div id="responseOutput">Awaiting input...</div>
     </div>
@@ -281,6 +53,8 @@
   // note - move to geminiApp.js
 
   const appPrefix = 'geminiNanoBuiltInApp:';
+  const timedResponses = true;
+  var lastRequest = null;
 
     async function submitToAI() {
 
@@ -288,21 +62,23 @@
       const inputText = document.getElementById('inputText').value.length ? document.getElementById('inputText').value : document.getElementById('inputText').getAttribute('placeholder');
       const output = document.getElementById('responseOutput');
       output.textContent = 'Thinking...';
+
+      if ( timedResponses ) lastRequest = Date.now();
       // document.getElementById('stop').style.display = 'inline-block';
 
       setTimeout(() => {
         
-        if ( action === 'summarize' ) window.runSummarizer( inputText, addToTabList );
-        if ( action === 'summarizeStream' ) window.runSummarizerStream( inputText, addToTabList );
-        if ( action === 'translate' ) window.runTranslator( inputText, addToTabList );
-        if ( action === 'rewrite' ) window.runRewriter( inputText, addToTabList );
-        if ( action === 'prompt' ) window.runPrompt( inputText, addToTabList );
-        if ( action === 'promptStream' ) window.runPromptStream( inputText, addToTabList );
+        if ( action === 'summarize' ) window.runSummarizer( inputText, submitToAIcompleted );
+        if ( action === 'summarizeStream' ) window.runSummarizerStream( inputText, submitToAIcompleted );
+        if ( action === 'translate' ) window.runTranslator( inputText, submitToAIcompleted );
+        if ( action === 'rewrite' ) window.runRewriter( inputText, submitToAIcompleted );
+        if ( action === 'prompt' ) window.runPrompt( inputText, submitToAIcompleted );
+        if ( action === 'promptStream' ) window.runPromptStream( inputText, submitToAIcompleted );
 
       }, 1000);
     }
 
-    async function checkModelAvail() {
+    async function about() {
 
       const inputText = document.getElementById('inputText').value;
       const output = document.getElementById('responseOutput');
@@ -311,25 +87,36 @@
       setTimeout(() => {
         let result =  `**Gemini Nano** \n\n` +
                      ` The following list of features are available/enabled on your machine: \n` +
-                     `| Feature | Enabled |\n`+
-                     `| --- | --- |\n` +
-                     `| Summarize | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} |\n` +
-                     `| Summarize (Stream) | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} |\n` +
-                     `| Translate (en - fr) | ${( 'Translator' in self ? '&#10003;' : ' ' )} |\n` +
-                     `| Rewrite | ${( 'Rewriter' in self ? '&#10003;' : ' ' )} |\n` +
-                     `| Prompt | ${( 'prompt' in self ? '&#10003;' : ' ' )} |\n` +
-                     `| Prompt (Stream) | ${( 'prompt' in self ? '&#10003;' : ' ' )} |\n\n` +
+                     `| Feature | Enabled | Purpose |\n`+
+                     `| --- | --- | --- |\n` +
+                    //  `| Summarize | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} | Summarizing narratives, articles or messages |\n` +
+                     `| Summarize | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} | Summarizing narratives, articles or messages|\n` +
+                     `| Translate (en - fr) | ${( 'Translator' in self ? '&#10003;' : ' ' )} | Translation of texts into other langages (en-fr defaulted) |\n` +
+                     `| Rewrite | ${( 'Rewriter' in self ? '&#10003;' : ' ' )} | Rewrite texts to sound more polite or formal |\n` +
+                    //  `| Prompt | ${( 'prompt' in self ? '&#10003;' : ' ' )} |\n` +
+                     `| Prompt | ${( 'prompt' in self ? '&#10003;' : ' ' )} | Answer questions based on provided texts or general Q&A|\n\n` +
                      `**How to Enable Foundational Model** (e.g. v2Nano) \n\n` + 
-                     `  note: visit developer site to [Learn more](https://developer.chrome.com/docs/ai/get-started) \n\n` +
                      `1. Copy reserved URL _chrome://flags/#prompt-api-for-gemini-nano_ and paste into new tab \n` + 
-                     `2. Enable feature and restart chrome  \n\n` +
+                     `2. Enable feature and restart chrome  \n` +
+                     `note: visit developer site to [Learn more](https://developer.chrome.com/docs/ai/get-started) \n\n` +
                      `**Getting Started** \n\n` + 
                      `Gemini (Nano) is an experimental AI feature (under Chrome)  \n` + 
                      `**Operating system**: Windows 10 or 11; macOS 13+ (Ventura and onwards); or Linux. Chrome for Android, iOS, and ChromeOS are not yet supported by the APIs which use Gemini Nano.  \n` +
                      `**Storage**: At least 22 GB of free space on the volume that contains your Chrome profile  \n`;
 
         output.innerHTML = window.markdownReturn( result );
-      }, 1000);
+      }, 100);
+    }
+
+    async function submitToAIcompleted( result ) {
+
+      console.log( 'submitToAIcompleted', result );
+
+      if ( timedResponses ) result[ 'started' ] = lastRequest;
+      if ( timedResponses ) result[ 'completed' ] = Date.now();
+
+      addToTabList( result );
+
     }
 
     async function addToTabList( result ) {
@@ -346,7 +133,7 @@
       tab.className = 'floatButton floatTab';
       tab.setAttribute( 'id', localID );
       tab.setAttribute( 'title', result.input );
-      tab.innerText = result.type + ':' + result.input;
+      tab.innerText = result.input;
 
       targ.appendChild(tab);
 
@@ -359,38 +146,93 @@
 
     }
 
+    async function clipboardCopy( id ) {
+
+      console.log( 'clipboardButton', id );
+
+      const result = await readTab( appPrefix + id );
+
+      if ( !result ) {
+        console.error( 'No result found for ID:', id );
+        return;
+      }
+
+      const textToCopy = `Input: ${result.input}\nResponse: ${result.response}`;
+
+      if ( navigator.clipboard ) {
+        try{ 
+
+            navigator.clipboard.writeText(textToCopy)
+              .then(() => {
+                console.log('Text copied to clipboard');
+              })
+              .catch(err => {
+                console.error('Failed to copy text: ', err);
+              });
+        } catch (err) {
+          console.error('Failed to copy text: ', err);
+        }
+      } else {
+        console.error('Clipboard not available' );
+      }
+
+    }
+
     async function createActionButtonsForTab( id ) {
 
       console.log( 'createActionButtonsForTab', id );
 
       const targ = document.getElementById('responseOutput');
+
+      // delete button (remove tab + content + stored entry)
+      const clipboardButton = document.createElement('button');
+
+      clipboardButton.className = 'historyButton';
+      clipboardButton.innerText = 'Copy';
+      clipboardButton.onclick = function() {
+        clipboardCopy( id );
+      };
+
+      targ.appendChild(clipboardButton);
+      
+      // delete button (remove tab + content + stored entry)
       const deleteButton = document.createElement('button');
 
-      deleteButton.style.height = 'auto';
-      deleteButton.style.fontSize = '0.8em';
+      deleteButton.className = 'historyButton';
       deleteButton.innerText = 'Delete';
       deleteButton.onclick = function() {
         deleteTab( id );
       };
 
       targ.appendChild(deleteButton);
-      
+
     }
 
-    async function readAllStoredTabs() {
+    async function readAllStoredPrompts() {
 
-      console.log( 'readAllStoredTabs' );
+      console.log( 'readAllStoredPrompts' );
 
       const targ = document.getElementById('tabList');
+
+      var arrStoredSearches = [];
 
       for ( let i = 0; i < localStorage.length; i++ ) {
 
         const key = localStorage.key(i);
         if ( key.startsWith( appPrefix ) ) {
           const result = JSON.parse( localStorage.getItem( key ) );
-          addToTabList( result );
+          arrStoredSearches.push( result )
         }
       }
+
+      arrStoredSearches.sort( (a,b) => a.completed < b.completed ? -1 : 1 );
+
+      for ( let i = 0; i < arrStoredSearches.length; i++ ) {
+
+        addToTabList( arrStoredSearches[ i ] );
+
+      }
+      
     }
 
     async function readTab( id ) {
@@ -412,9 +254,9 @@
       const output = document.getElementById('responseOutput');
 
       setTimeout(() => {
-        let result =  `done \n`;
+        let result =  '```\ndone\n```';
         output.innerHTML = window.markdownReturn( result );
-      }, 1000);
+      }, 200);
 
     }
 
@@ -423,8 +265,8 @@
         submitToAI();
     };
 
-    document.getElementById( 'checkAvail' ).onclick = function() {
-        checkModelAvail();
+    document.getElementById( 'about' ).onclick = function() {
+        about();
     };
 
     // document.getElementById( 'stop' ).onclick = function() {
@@ -432,10 +274,10 @@
     //     window.stopGemini();
     // };
 
-    readAllStoredTabs()
+    readAllStoredPrompts()
 
     setTimeout(() => {
-      checkModelAvail();
+      about();
     }, 500);
 
 </script>

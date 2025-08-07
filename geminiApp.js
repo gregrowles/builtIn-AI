@@ -7,13 +7,13 @@
 
   // const controller = new AbortController(); // for aborting gemini tasks (BUGGY: FIX ME)
 
-  const stopControllerButtonID = 'stop'; //document.getElementById('');
+  // const stopControllerButtonID = 'stop'; //document.getElementById('');
   const responseOutputControlID = 'responseOutput';
 
   const summarizerInstance = new GeminiSummarizer( markdownOutput );
   const translatorInstance = new GeminiTranslator( markdownOutput );
   const rewriterInstance = new GeminiRewriter( markdownOutput );
-  const promptLanguageModel = new GeminiPrompt( stopControllerButtonID, markdownOutput );
+  const promptLanguageModel = new GeminiPrompt( markdownOutput );
 
   
   // 1. bind "stop" button to controller (also show/hide accordingly)
@@ -63,13 +63,15 @@
 
     await summarizerInstance.init();
 
-    await summarizerInstance.summarizeStream( inpText, 'intended for health managers', markdownOutput );
+    await summarizerInstance.summarizeStream( inpText, 'intended for health managers', markdownOutput, ( streamFinal ) => {
 
-    if ( callback && typeof callback === 'function') {
+      if ( callback && typeof callback === 'function') {
 
-      callback( { id: generateRandomId(15), type: 'Ss', input: inpText, response: summary } );
+        callback( { id: generateRandomId(15), type: 'Ss', input: inpText, response: streamFinal } );
 
-    }
+      }
+
+    });
 
   }
 
@@ -127,7 +129,7 @@
   }
   async function runPromptStream ( inpText, callback ) {
 
-    document.getElementById( stopControllerButtonID ).style.display = 'block';
+    // document.getElementById( stopControllerButtonID ).style.display = 'block';
 
     await promptLanguageModel.init();
 
@@ -168,4 +170,4 @@
   window.markdownReturn = markdownReturn;
   window.markdownOutput = markdownOutput;
   // window.controllerForAbort = controller;
-  window.stopGemini = stopGemini;
+  // window.stopGemini = stopGemini;
