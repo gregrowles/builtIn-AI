@@ -2,12 +2,13 @@ export class GeminiTranslator {
   constructor( onResponse ) {
     this.translator = null;
     this.onResponse = onResponse || null;
+    this.running = false;
   }
 
   // Initializes the translator (must be called once)
   async init( sourceLang = 'en', targetLang = 'fr' ) {
     if (this.translator) return;
-
+    if( this.onResponse ) this.onResponse(  `creating *translator* model-feature` );
     this.translator = await Translator.create({
         sourceLanguage: sourceLang || 'en',
         targetLanguage: targetLang || 'fr',
@@ -15,7 +16,7 @@ export class GeminiTranslator {
             m.addEventListener('downloadprogress', (e) => {
                 const percent = Math.round(e.loaded * 100);
                 console.log(`translator download progress: ${percent}%`);
-              if( this.onResponse ) this.onResponse(  `[x] translator download progress: ${percent}%` );
+              // if( this.onResponse ) this.onResponse(  `[x] translator download progress: ${percent}%` );
             });
         },
     });

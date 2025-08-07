@@ -2,12 +2,13 @@ export class GeminiSummarizer {
   constructor( onResponse ) {
     this.summarizer = null;
     this.onResponse = onResponse || null;
+    this.running = false;
   }
 
   // Initializes the summarizer (must be called once)
   async init() {
     if (this.summarizer) return;
-
+    if( this.onResponse ) this.onResponse(  `creating *summarizer* model-feature` );
     const options_healthJournal_keypoints_markdown_short = {
       sharedContext: 'This is a health journal article',
       type: 'key-points', //"tldr", "teaser", "key-points" (default), "headline"
@@ -17,7 +18,7 @@ export class GeminiSummarizer {
         m.addEventListener('downloadprogress', (e) => {
             const percent = Math.round(e.loaded * 100);
             console.log(`summarizer download progress: ${percent}%`);
-            if( this.onResponse ) this.onResponse(  `[x] summarizer download progress: ${percent}%` );
+            // if( this.onResponse ) this.onResponse(  `[x] summarizer download progress: ${percent}%` );
         });
       }
     };

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gemini (builtIn AI) Interface</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.0/showdown.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
   <script type="module" src="geminiApp.js"></script>
   <style>
     * {
@@ -23,27 +23,72 @@
       display: flex;
       flex-direction: column;
       flex: 1;
+      overflow: hidden;
     }
-
+    @media (max-width: 767px) {
+      .panel {
+        padding: 1rem;
+      }
+      .panel.input {
+        overflow: hidden;
+        max-height: 380px;
+      }
+      .panel.output {
+        height: fit-content;
+      }
+     #responseOutput {
+        height: calc(100vh - 480px);
+      }
+      textarea {
+        height: 210px;
+      }
+      .inputsRow {
+        margin: auto;
+        height: 70px !important;
+        overflow: auto;
+      }
+    }
     @media (min-width: 768px) {
       .container {
         flex-direction: row;
+      }
+      .panel {
+        padding: 2rem;
+      }
+      .panel.input {
+        overflow: hidden;
+        height: 100vh;
+      }
+      .panel.output {
+        height: calc(100vh + 0.1em);
+        filter: drop-shadow(4px 0px 6px #888);
+      }
+      textarea {
+        height: calc(100vh - 215px) !important;
+      }
+      .inputsRow {
+        margin: auto 0;
+        height: 75px;
+      }
+      #responseOutput {
+        height: calc(100% - 102px);
       }
     }
 
     .panel {
       flex: 1;
-      padding: 1rem;
       border: 1px solid #ccc;
-      overflow-y: auto;
     }
 
     .panel.input {
       background: #f9f9f9;
+      overflow-y: auto;
     }
 
     .panel.output {
       background: #fff;
+      /* height: max-content; */
+      overflow-y: hidden;
     }
 
     textarea {
@@ -52,6 +97,12 @@
       resize: vertical;
       padding: 0.5rem;
       font-size: 1rem;
+      border-radius: 6px
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
     }
     .inputsRow {
       display: flex;
@@ -63,88 +114,310 @@
       margin-top: 0.5rem;
       padding: 0.5rem 1rem;
       font-size: 1rem;
+      height: 56px;
     }
 
     #responseOutput {
+      overflow-y: auto;
       white-space: pre-wrap;
-      margin-top: 1rem;
-      gap: 4px;
-      display: grid
+      border-radius: 6px;
+      display: block;
+      border: 2px solid #D7EC37;
+      /* background-image: linear-gradient(to bottom, #FEFEF6, #FBFDEC); */
+      background-color: #FEFEF6;
+      padding: 8px 8px ;
     }
 
     #responseOutput > p {
         margin: 4px;
     }
 
+    #responseOutput table {
+      width: fit-content;
+      font-size: 0.8em;
+      /* width: 100%; */
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    #responseOutput pre {
+
+      display: block;
+      padding: 9.5px;
+      margin: 0 0 10px;
+      font-size: 13px;
+      line-height: 1.42857143;
+      color: #333;
+      word-break: break-all;
+      word-wrap: break-word;
+      background-color: #f5f5f5;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+
+    }
+
+    #responseOutput th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    #responseOutput th {
+      background-color: #f2f2f2;
+    }
+
+    #responseOutput tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .floatButton {
+      filter: drop-shadow(-1px 0px 3px #aaa);
+      background: #fff;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .floatButton:hover {
+      filter: drop-shadow(-1px 0px 3px #bbb);
+      background: #f5f5f5;
+    }
+    .floatTab {
+      max-width: 63px;
+      height: 33px;
+      padding: 8px;
+      font-size: 1.25em;
+      margin: auto 0;
+      position: static;
+      align-content: center;
+      align-self: center;
+      text-align: -webkit-center;
+      font-size: 0.9em;
+      overflow-x: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      border-radius: 10px 10px 0 0;
+      background-image: linear-gradient(to bottom, #fff, #F9FBDE);
+    }
+
+    /* #stop {
+      display: none;
+      width: 33px;
+      height: 33px;
+      padding: 1px 8px;
+      font-size: 1.25em;
+      margin: auto 0;
+      position: relative;
+      top: 2px;
+    } */
+    #checkAvail {
+      width: 63px;
+      height: 33px;
+      padding: 8px;
+      font-size: 1.25em;
+      margin: auto 8px auto 0;
+      position: static;
+      align-content: center;
+      align-self: center;
+      text-align: -webkit-center;
+      font-size: 0.9em;
+    }
+
+    .backgroundBricks {
+      background-color: rgb(237, 237, 237);
+      background-image: linear-gradient(335deg, rgb(247, 247, 247) 24px, transparent 24px), linear-gradient(155deg, rgb(255, 255, 255) 24px, transparent 24px), linear-gradient(335deg, rgb(247, 247, 247) 24px, transparent 24px), linear-gradient(155deg, rgb(255, 255, 255) 24px, transparent 24px);
+      background-size: 58px 58px;
+      background-position: 0px 3px, 2px 34px, 32px 32px, 34px 5px;
+    }
+
+    #tabList {
+      padding: 0 3px;
+      display: flex;
+      /* gap: 4px; */
+    }
+
   </style>
 </head>
+
 <body>
 
   <div class="container">
+
     <!-- Input Panel -->
     <div class="panel input">
-      <h2>
-        Input Text 
-      </h2>
+      <div style="display: flex;">
+        <h2>
+          Input Text 
+        </h2>
+      </div>
+
       <textarea id="inputText" placeholder="What is today's date?"></textarea>
+
       <div class="inputsRow">
-        <label>Input Action</label>
+        <!-- <h2>Model Feature</h2> -->
         <select id="actionSelect">
             <option value="summarize">Summarize</option>
             <option value="summarizeStream">Summarize (Stream)</option>
             <option value="translate">Translate (en-fr)</option>
             <option value="rewrite">Rewrite</option>
             <option value="prompt" selected>Prompt</option>
-            <option value="promptStream">Prompt (Stream)</option>
+            <option value="promptStream" selected>Prompt (Stream)</option>
         </select>
         <button id="submit">Submit to AI</button>
-        <button id="checkAvail" style="margin: 0 0 0 auto">check Availability</button>
+        <!-- <div id="stop" class="floatButton">⏹</div> -->
       </div>
     </div>
 
     <!-- Output Panel -->
     <div class="panel output">
-      <h2>Gemini Nano Response</h2>
+      <h2>AI Response</h2>
+      <div id="tabList">
+        <div id="checkAvail" class="floatButton">info</div>
+      </div>
       <div id="responseOutput">Awaiting input...</div>
     </div>
   </div>
 
 <script type="text/javascript">
 
+  // note - move to geminiApp.js
+
+  const appPrefix = 'geminiNanoBuiltInApp:';
+
     async function submitToAI() {
+
       const action = document.getElementById('actionSelect').value;
       const inputText = document.getElementById('inputText').value.length ? document.getElementById('inputText').value : document.getElementById('inputText').getAttribute('placeholder');
       const output = document.getElementById('responseOutput');
       output.textContent = 'Thinking...';
+      // document.getElementById('stop').style.display = 'inline-block';
 
       setTimeout(() => {
         
-        if ( action === 'summarize' ) window.runSummarizer( inputText );
-        if ( action === 'summarizeStream' ) window.runSummarizerStream( inputText );
-        if ( action === 'translate' ) window.runTranslator( inputText );
-        if ( action === 'rewrite' ) window.runRewriter( inputText );
-        if ( action === 'prompt' ) window.runPrompt( inputText );
-        if ( action === 'promptStream' ) window.runPromptStream( inputText );
-        
+        if ( action === 'summarize' ) window.runSummarizer( inputText, addToTabList );
+        if ( action === 'summarizeStream' ) window.runSummarizerStream( inputText, addToTabList );
+        if ( action === 'translate' ) window.runTranslator( inputText, addToTabList );
+        if ( action === 'rewrite' ) window.runRewriter( inputText, addToTabList );
+        if ( action === 'prompt' ) window.runPrompt( inputText, addToTabList );
+        if ( action === 'promptStream' ) window.runPromptStream( inputText, addToTabList );
+
       }, 1000);
     }
+
     async function checkModelAvail() {
+
       const inputText = document.getElementById('inputText').value;
       const output = document.getElementById('responseOutput');
       output.textContent = 'Checking...';
 
-      // Replace this mock with your real streaming or async AI logic
       setTimeout(() => {
-        let result = '[' + ( 'Summarizer' in self ? 'x' : '  ' ) + '] Summarize  <br>' +
-                     '[' + ( 'Summarizer' in self ? 'x' : '  ' ) + '] Summarize (Stream)  <br>' +
-                     '[' + ( 'Translator' in self ? 'x' : '  ' ) + '] Translate (en-fr) <br>' +
-                     '[' + ( 'Rewriter' in self ? 'x' : '  ' ) + '] Rewrite  <br>' +
-                     '[' + ( 'prompt' in self ? 'x' : '  ' ) + '] Prompt  <br>' + 
-                     '[' + ( 'prompt' in self ? 'x' : '  ' ) + '] Prompt (Stream)';
+        let result =  `**Gemini Nano** \n\n` +
+                     ` The following list of features are available/enabled on your machine: \n` +
+                     `| Feature | Enabled |\n`+
+                     `| --- | --- |\n` +
+                     `| Summarize | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} |\n` +
+                     `| Summarize (Stream) | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} |\n` +
+                     `| Translate (en - fr) | ${( 'Translator' in self ? '&#10003;' : ' ' )} |\n` +
+                     `| Rewrite | ${( 'Rewriter' in self ? '&#10003;' : ' ' )} |\n` +
+                     `| Prompt | ${( 'prompt' in self ? '&#10003;' : ' ' )} |\n` +
+                     `| Prompt (Stream) | ${( 'prompt' in self ? '&#10003;' : ' ' )} |\n\n` +
+                     `**How to Enable Foundational Model** (e.g. v2Nano) \n\n` + 
+                     `  note: visit developer site to [Learn more](https://developer.chrome.com/docs/ai/get-started) \n\n` +
+                     `1. Copy reserved URL _chrome://flags/#prompt-api-for-gemini-nano_ and paste into new tab \n` + 
+                     `2. Enable feature and restart chrome  \n\n` +
+                     `**Getting Started** \n\n` + 
+                     `Gemini (Nano) is an experimental AI feature (under Chrome)  \n` + 
+                     `**Operating system**: Windows 10 or 11; macOS 13+ (Ventura and onwards); or Linux. Chrome for Android, iOS, and ChromeOS are not yet supported by the APIs which use Gemini Nano.  \n` +
+                     `**Storage**: At least 22 GB of free space on the volume that contains your Chrome profile  \n`;
 
         output.innerHTML = window.markdownReturn( result );
       }, 1000);
     }
+
+    async function addToTabList( result ) {
+        
+      console.log( 'addToTabList', result );
+
+      const localID = appPrefix + result.id;
+
+      localStorage.setItem( localID, JSON.stringify( result ) );
+
+      const targ = document.getElementById('tabList');
+      const tab = document.createElement('div');
+
+      tab.className = 'floatButton floatTab';
+      tab.setAttribute( 'id', localID );
+      tab.setAttribute( 'title', result.input );
+      tab.innerText = result.type + ':' + result.input;
+
+      targ.appendChild(tab);
+
+      tab.addEventListener('click', function() {
+        readTab( result.id );
+        const output = document.getElementById('responseOutput');
+        output.innerHTML = window.markdownReturn( "```\n" + result.input + "\n" + "```\n" +  result.response );
+        createActionButtonsForTab( result.id );
+      });
+
+    }
+
+    async function createActionButtonsForTab( id ) {
+
+      console.log( 'createActionButtonsForTab', id );
+
+      const targ = document.getElementById('responseOutput');
+      const deleteButton = document.createElement('button');
+
+      deleteButton.style.height = 'auto';
+      deleteButton.style.fontSize = '0.8em';
+      deleteButton.innerText = 'Delete';
+      deleteButton.onclick = function() {
+        deleteTab( id );
+      };
+
+      targ.appendChild(deleteButton);
+      
+    }
+
+    async function readAllStoredTabs() {
+
+      console.log( 'readAllStoredTabs' );
+
+      const targ = document.getElementById('tabList');
+
+      for ( let i = 0; i < localStorage.length; i++ ) {
+
+        const key = localStorage.key(i);
+        if ( key.startsWith( appPrefix ) ) {
+          const result = JSON.parse( localStorage.getItem( key ) );
+          addToTabList( result );
+        }
+      }
+    }
+
+    async function readTab( id ) {
+
+      console.log( 'readTab', id );
+
+      return JSON.parse( localStorage.getItem( id ) );
+
+    }
+
+    async function deleteTab( id ) {
+
+      console.log( 'deleteTab', id );
+
+      localStorage.removeItem( appPrefix + id );
+
+      document.getElementById( appPrefix + id ).remove();
+
+      const output = document.getElementById('responseOutput');
+
+      setTimeout(() => {
+        let result =  `done \n`;
+        output.innerHTML = window.markdownReturn( result );
+      }, 1000);
+
+    }
+
 
     document.getElementById( 'submit' ).onclick = function() {
         submitToAI();
@@ -153,6 +426,17 @@
     document.getElementById( 'checkAvail' ).onclick = function() {
         checkModelAvail();
     };
+
+    // document.getElementById( 'stop' ).onclick = function() {
+    //     // window.controllerForAbort.abort();
+    //     window.stopGemini();
+    // };
+
+    readAllStoredTabs()
+
+    setTimeout(() => {
+      checkModelAvail();
+    }, 500);
 
 </script>
 

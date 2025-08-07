@@ -2,12 +2,13 @@ export class GeminiRewriter {
   constructor( onResponse ) {
     this.rewriter = null;
     this.onResponse = onResponse || null;
+    this.running = false;
   }
 
   // Initializes the rewriter (must be called once)
   async init() {
     if (this.rewriter) return;
-
+    if( this.onResponse ) this.onResponse(  `creating *rewriter* model-feature` );
     const options = {
         sharedContext: 'This is an professional summary for colleagues and managers about a health crisis.',
         tone: 'more-formal', // "more-formal", "as-is" (default), "more-casual"
@@ -17,7 +18,7 @@ export class GeminiRewriter {
             m.addEventListener('downloadprogress', (e) => {
                 const percent = Math.round(e.loaded * 100);
                 console.log(`rewriter download progress: ${percent}%`);
-                if( this.onResponse ) this.onResponse(  `[x] rewriter download progress: ${percent}%` );
+                // if( this.onResponse ) this.onResponse(  `[x] rewriter download progress: ${percent}%` );
             });
         }
     };
