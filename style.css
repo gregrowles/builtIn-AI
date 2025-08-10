@@ -115,7 +115,7 @@
       display: block;
       border: 2px solid #D7EC37;
       /* background-image: linear-gradient(to bottom, #FEFEF6, #FBFDEC); */
-      background-color: #FEFEF6;
+      /* background-color: #FEFEF6; */
       padding: 8px 8px ;
     }
 
@@ -125,14 +125,17 @@
 
     #responseOutput table {
       width: fit-content;
-      font-size: 0.8em;
+      font-size: 0.9em;
       /* width: 100%; */
       border-collapse: collapse;
       margin: 20px 0;
     }
 
-    #responseOutput pre {
+    #responseOutput ol, #responseOutput ul {
+        margin: 0;
+    }
 
+    #responseOutput pre {
         display: block;
         padding: 9.5px;
         margin: 0 0 10px;
@@ -143,7 +146,8 @@
         border: 1px solid #ccc;
         border-radius: 4px;
         white-space: normal;
-
+        max-height: 170px;
+        overflow: auto;
     }
 
     #responseOutput th, td {

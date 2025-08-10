@@ -85,24 +85,25 @@
       output.textContent = 'Checking...';
 
       setTimeout(() => {
-        let result =  `**Gemini Nano** \n\n` +
-                     ` The following list of features are available/enabled on your machine: \n` +
-                     `| Feature | Enabled | Purpose |\n`+
-                     `| --- | --- | --- |\n` +
-                    //  `| Summarize | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} | Summarizing narratives, articles or messages |\n` +
-                     `| Summarize | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} | Summarizing narratives, articles or messages|\n` +
-                     `| Translate (en - fr) | ${( 'Translator' in self ? '&#10003;' : ' ' )} | Translation of texts into other langages (en-fr defaulted) |\n` +
-                     `| Rewrite | ${( 'Rewriter' in self ? '&#10003;' : ' ' )} | Rewrite texts to sound more polite or formal |\n` +
-                    //  `| Prompt | ${( 'prompt' in self ? '&#10003;' : ' ' )} |\n` +
-                     `| Prompt | ${( 'prompt' in self ? '&#10003;' : ' ' )} | Answer questions based on provided texts or general Q&A|\n\n` +
-                     `**How to Enable Foundational Model** (e.g. v2Nano) \n\n` + 
-                     `1. Copy reserved URL _chrome://flags/#prompt-api-for-gemini-nano_ and paste into new tab \n` + 
-                     `2. Enable feature and restart chrome  \n` +
-                     `note: visit developer site to [Learn more](https://developer.chrome.com/docs/ai/get-started) \n\n` +
-                     `**Getting Started** \n\n` + 
-                     `Gemini (Nano) is an experimental AI feature (under Chrome)  \n` + 
-                     `**Operating system**: Windows 10 or 11; macOS 13+ (Ventura and onwards); or Linux. Chrome for Android, iOS, and ChromeOS are not yet supported by the APIs which use Gemini Nano.  \n` +
-                     `**Storage**: At least 22 GB of free space on the volume that contains your Chrome profile  \n`;
+        let result =  '**Gemini Nano** \n\n' +
+                     ' The following list of features are available/enabled on your machine: \n' +
+                     '| Feature | Enabled | Purpose |\n'+
+                     '| --- | --- | --- |\n' +
+                    //  '| Summarize | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} | Summarizing narratives, articles or messages |\n' +
+                     '| Summarize | ' + ( 'Summarizer' in self ? '&#10003;' : ' ' ) + ' | Summarizing narratives, articles or messages|\n' +
+                     '| Translate (en - fr) | ' + ( 'Translator' in self ? '&#10003;' : ' ' ) + ' | Translation of texts into other langages (en-fr defaulted) |\n' +
+                     '| Rewrite | ' + ( 'Rewriter' in self ? '&#10003;' : ' ' ) + ' | Rewrite texts to sound more polite or formal |\n' +
+                    //  '| Prompt | ${( 'prompt' in self ? '&#10003;' : ' ' )} |\n' +
+                     '| Prompt | ' + ( 'prompt' in self ? '&#10003;' : ' ' ) + ' | Answer questions based on provided texts or general Q&A|\n\n' +
+                     '**Getting Started** \n\n' + 
+                     'Gemini (Nano) is an experimental AI feature (under Chrome)\n' + 
+                     'How to Enable Foundational Model (e.g. v2Nano) \n' + 
+                     '1. Copy reserved URL _chrome://flags/#prompt-api-for-gemini-nano_ and paste into new tab \n' + 
+                     '2. Enable feature and restart chrome \n\n' +
+                     'Note: Individual features may require separate settings to be enabled ([rewriter](chrome://flags/#rewriter-api-for-gemini-nano));' + 
+                     'visit developer site to [Learn more](https://developer.chrome.com/docs/ai/get-started) \n\n' +
+                     '**Operating system**\n\nWindows 10 or 11; macOS 13+ (Ventura and onwards); or Linux. Chrome for Android, iOS, and ChromeOS are not yet supported by the APIs which use Gemini Nano.  \n' +
+                     '**Storage**\n\nAt least 22 GB of free space on the volume that contains your Chrome profile  \n';
 
         output.innerHTML = window.markdownReturn( result );
       }, 100);
@@ -121,14 +122,11 @@
 
     async function addToTabList( result ) {
         
-      console.log( 'addToTabList', result );
-
       const localID = appPrefix + result.id;
-
-      localStorage.setItem( localID, JSON.stringify( result ) );
-
       const targ = document.getElementById('tabList');
       const tab = document.createElement('div');
+
+      localStorage.setItem( localID, JSON.stringify( result ) );
 
       tab.className = 'floatButton floatTab';
       tab.setAttribute( 'id', localID );
@@ -147,8 +145,6 @@
     }
 
     async function clipboardCopy( id ) {
-
-      console.log( 'clipboardButton', id );
 
       const result = await readTab( appPrefix + id );
 
