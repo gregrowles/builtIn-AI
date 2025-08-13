@@ -26,14 +26,15 @@
       <div class="inputsRow">
         <!-- <h2>Model Feature</h2> -->
         <select id="actionSelect">
-            <option value="summarize">Summarize</option>
-            <option value="summarizeStream">Summarize (Stream)</option>
-            <option value="translate">Translate (en-fr)</option>
-            <option value="rewrite">Rewrite</option>
-            <option value="prompt" selected>Prompt</option>
-            <option value="promptStream" selected>Prompt (Stream)</option>
+            <!-- <option value="summarize">Summarize</option> -->
+            <option value="summarizeStream" hint="Summarize input text using Gemini-Nano 'summarizer' feature">Summarize (Stream)</option>
+            <option value="translate" hint="AI will translate input text using Gemini-Nano 'translate' feature">Translate (en-fr)</option>
+            <option value="rewrite"  hint="AI will attempt to rewrite input text using default configs for 'rewrite' feature`">Rewrite</option>
+            <!-- <option value="prompt" selected>Prompt</option> -->
+            <option value="promptStream" selected hint="AI will respond to input prompts using Gemini-Nano for 'prompt' feature`">Prompt (Stream)</option>
         </select>
         <button id="submit">Submit to AI</button>
+        <div style="font-size: 12px; border: 1px dotted #AAA;padding:2px;margin:auto" id="hint"></div>
         <!-- <div id="stop" class="floatButton">⏹</div> -->
       </div>
     </div>
@@ -77,6 +78,9 @@
 
       }, 1000);
     }
+
+
+/* Moved into geminiApp from index.html  */
 
     async function about() {
 
@@ -138,7 +142,7 @@
       tab.addEventListener('click', function() {
         readTab( result.id );
         const output = document.getElementById('responseOutput');
-        output.innerHTML = window.markdownReturn( "```\n" + result.input + "\n" + "```\n" +  result.response );
+        output.innerHTML = "<div class='floatInput'>" + result.input + "</div><br>" + window.markdownReturn( "\n" +  result.response );
         createActionButtonsForTab( result.id );
       });
 
@@ -256,7 +260,6 @@
 
     }
 
-
     document.getElementById( 'submit' ).onclick = function() {
         submitToAI();
     };
@@ -264,6 +267,14 @@
     document.getElementById( 'about' ).onclick = function() {
         about();
     };
+
+    document.getElementById('actionSelect').onchange = function(e,v) {
+      const selectedElement = document.getElementById('actionSelect');
+      const selectedOption = selectedElement.options[ selectedElement.selectedIndex ];
+      console.log( selectedOption.getAttribute( 'hint' ) );
+      // document.getElementById( 'inputText' ).setAttribute( 'placeholder', selectedOption.getAttribute( 'hint' ) );
+      document.getElementById( 'hint' ).innerHTML = selectedOption.getAttribute( 'hint' );
+    }
 
     // document.getElementById( 'stop' ).onclick = function() {
     //     // window.controllerForAbort.abort();

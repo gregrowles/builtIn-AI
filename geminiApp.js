@@ -145,6 +145,12 @@
 
   }
 
+
+
+
+
+  /*  util functions  */
+
   function generateRandomId(length = 10) {
     return Math.random().toString(36).substring(2, length + 2);
   }
@@ -171,3 +177,10 @@
   window.markdownOutput = markdownOutput;
   // window.controllerForAbort = controller;
   // window.stopGemini = stopGemini;
+
+  // window.about = about;
+  // window.submitToAIcompleted = submitToAIcompleted;
+  // window.about = about;
+  // window.about = about;
+  // window.about = about;
+  
