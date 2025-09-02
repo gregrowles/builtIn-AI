@@ -5,9 +5,7 @@
 
   import * as markdownIt from 'https://esm.run/markdown-it';
 
-  // const controller = new AbortController(); // for aborting gemini tasks (BUGGY: FIX ME)
-
-  // const stopControllerButtonID = 'stop'; //document.getElementById('');
+  // hardCoded: fix
   const responseOutputControlID = 'responseOutput';
 
   const summarizerInstance = new GeminiSummarizer( markdownOutput );
@@ -129,8 +127,6 @@
   }
   async function runPromptStream ( inpText, callback ) {
 
-    // document.getElementById( stopControllerButtonID ).style.display = 'block';
-
     await promptLanguageModel.init();
 
     await promptLanguageModel.promptStream( inpText, markdownOutput, ( streamFinal ) => {
@@ -144,30 +140,41 @@
     });
 
   }
+  async function runPromptStreamJsonInput ( inpObj, callback ) {
+
+    if ( typeof inpObj === 'object' && inpObj?.defaultPrompt ) promptLanguageModel.defaults.systemPrompt = inpObj.defaultPrompt;
+
+    await promptLanguageModel.init();
+
+    await promptLanguageModel.promptStream( inpObj.prompt, markdownOutput, ( streamFinal ) => {
+
+      if ( callback && typeof callback === 'function') {
+
+        callback( { id: generateRandomId(15), type: 'Ps', input: inpObj.prompt, response: streamFinal } );
+
+      }
+
+    });
+
+  }
+
+  async function destroyLanguageModel() {
+    promptLanguageModel.destroy();
+  }
 
   function generateRandomId(length = 10) {
     return Math.random().toString(36).substring(2, length + 2);
   }
 
-  // struggling with STOP/abort functionality: disabling for now
-  // async function stopGemini () {
-  //   if ( promptLanguageModel.running ) promptLanguageModel.stop();
-  //   if ( summarizerInstance.running ) summarizerInstance.stop();
-  //   if ( translatorInstance.running ) translatorInstance.stop();  
-  //   if ( rewriterInstance.running ) rewriterInstance.stop();
-  //   // controller.abort( "User aborted the operation." );
-  // }
-
-
   // Expose functions to the global scope
-
+  window.promptCharacters = promptLanguageModel.characters;
   window.runSummarizer = runSummarizer;
   window.runSummarizerStream = runSummarizerStream;   
   window.runTranslator = runTranslator;
   window.runRewriter = runRewriter;
   window.runPrompt = runPrompt;
   window.runPromptStream = runPromptStream;
+  window.runPromptStreamJsonInput = runPromptStreamJsonInput;
+  window.destroyLanguageModel = destroyLanguageModel;
   window.markdownReturn = markdownReturn;
   window.markdownOutput = markdownOutput;
-  // window.controllerForAbort = controller;
-  // window.stopGemini = stopGemini;
