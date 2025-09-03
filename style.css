@@ -34,6 +34,7 @@
       max-width: 635px;
       margin: 0 auto;
       gap: 0;
+      height: calc(100vh - 210px);
     }
 
     #responseOutput > p {
@@ -49,8 +50,10 @@
     }
 
     #responseOutput ol, #responseOutput ul, #responseOutput li {
-        margin: 0 0 8px 0;
-        /* display: ruby-text; */
+      margin: 0 0 8px 0;
+      line-height: 30px;
+      padding: 0;
+      display: -webkit-inline-box;
     }
 
     #responseOutput pre {
@@ -102,6 +105,7 @@
       border-top: 4px solid #E1FBDF;
       border-bottom: 4px solid #E1FBDF;
       max-width: 635px;
+      min-height: 100px;
     }
     .floatOutput {
       border-radius: 1rem 1rem 1rem;

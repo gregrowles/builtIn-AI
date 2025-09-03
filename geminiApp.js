@@ -150,7 +150,14 @@
 
       if ( callback && typeof callback === 'function') {
 
-        callback( { id: generateRandomId(15), type: 'Ps', input: inpObj.prompt, response: streamFinal } );
+        var cloneData = JSON.parse( JSON.stringify( inpObj ) );
+
+        cloneData[ 'id' ] = generateRandomId(15);
+        cloneData[ 'type' ] = 'Ps';
+        cloneData[ 'response' ] = streamFinal;
+
+        // callback( { id: generateRandomId(15), type: 'Ps', input: inpObj.prompt, response: streamFinal } );
+        callback( cloneData );
 
       }
 

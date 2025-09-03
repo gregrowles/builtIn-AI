@@ -11,6 +11,7 @@
   <link href="style.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen flex items-baseline justify-center p-6">
+
   <div class="w-full max-w-6xl bg-white rounded-2xl shadow-xl flex overflow-auto min-h-wfa">
 
     <!-- Sidebar / History -->
@@ -53,7 +54,7 @@
               <label class="block text-sm font-medium">
                 <div class="flex items-center space-x-2">
                   <i data-lucide="brain-cog" class="w-4 h-4 text-purple-600"></i>
-                  <span>NLP Persona</span>
+                  <span>AI Persona</span>
                 </div>
                 <span class="text-gray-500 text-xs">(How should the AI reason for the target audience?)</span>
               </label>
@@ -187,6 +188,38 @@
     </main>
   </div>
 
+  <!-- Save As -->
+  <div id="savePrompt" class="hidden fixed top-64 left-25 max-w-sm w-full bg-white shadow-lg rounded-2xl p-4 items-start gap-3 transition transform translate-y-0 opacity-100">
+    <div class="flex items-center justify-between w-full mb-4">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Save Prompt</h2>
+      <button onclick="document.getElementById('savePrompt').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+              ✕
+      </button>
+      </div>
+
+    <form class="space-y-4">
+      <!-- Name -->
+      <div>
+        <!-- <label class="block text-sm font-medium text-gray-700">Name</label> -->
+        <input type="text" placeholder="Name"
+          class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+      </div>
+
+      <!-- Group -->
+      <div>
+        <!-- <label class="block text-sm font-medium text-gray-700">Under Group</label> -->
+        <input type="text" placeholder="Description (optional)"
+          class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 mb-10" />
+      </div>
+
+      <!-- Button -->
+      <a id="saveAs"
+        class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500">
+        Save
+    </a>
+    </form>
+  </div>
+
   <script>
 
     lucide.createIcons();
@@ -279,10 +312,12 @@
       const inputTable = document.getElementById('pasteInputTable').getElementsByTagName( 'textarea' )[0].value || '';
       const inputPrompt = document.getElementById('promptInstructions').getElementsByTagName( 'textarea' )[0].value || '';
 
-      if ( inputText.length ) promptText += 'Context information: ' + inputText + '\n\n';
-      if ( inputTable.length ) promptText += 'Context information (supporting table data): ' + inputTable + '\n\n';
+      if ( inputText.length ) promptText += 'Context: ' + inputText + '\n\n';
+      if ( inputTable.length ) promptText += 'Context (supporting table data): ' + inputTable + '\n\n';
       if ( inputPrompt.length ) promptText += 'Your instructions: ' + inputPrompt + '\n\n';
 
+      promptObj[ 'title' ] = inputPrompt;
+      // promptObj[ 'input' ] = promptText;
       promptObj[ 'prompt' ] = promptText;
       promptObj[ 'character' ] = document.getElementById('character').value;
 
@@ -314,23 +349,23 @@
       if ( timedResponses ) result[ 'started' ] = lastRequest;
       if ( timedResponses ) result[ 'completed' ] = Date.now();
 
-      addToTabList( result );
-      addCopyButtonToCompletedResponse( result.id );
+      addToHistoryList( result );
+      createActionButtonsForHistoryItemPreview( appPrefix + ':history:' + result.id, result );
 
     }
 
-    async function addToTabList( result ) {
+    async function addToHistoryList( result ) {
         
-      const localID = appPrefix + result.id;
+      const localID = appPrefix + ':history:' + result.id;
       const targ = document.getElementById('history');
       const tab = document.createElement('p');
 
       localStorage.setItem( localID, JSON.stringify( result ) );
 
-      tab.className = 'btnTabHistory bg-white border rounded-lg p-2 shadow-sm overflow-hidden max-h-10 content-center';
+      tab.className = 'btnTabHistory w-54 truncate bg-white border rounded-lg p-2 shadow-sm overflow-hidden max-h-10 content-center';
       tab.setAttribute( 'id', localID );
-      tab.setAttribute( 'title', result.input );
-      tab.innerText = result.input.substring(0, 24) + ( result.input.length > 24 ? '...' : '' );
+      tab.setAttribute( 'title', result.title );
+      tab.innerText = result.title.substring(0, 30) + ( result.title.length > 30 ? '...' : '' );
 
       targ.appendChild(tab);
 
@@ -339,41 +374,23 @@
         document.getElementsByClassName( 'tabOutput' )[0].click();
         // output.innerHTML = window.markdownReturn( "```\n" + result.input + "\n" + "```\n" +  result.response );
         const output = document.getElementById('responseOutput');
-        output.innerHTML = "<div class='floatInput'>" + window.markdownReturn( result.input ) + "</div><div class='floatOutput flex flex-col gap-4'>" + window.markdownReturn( result.response ) + "<div id='AIresponseButtonRow'></div></div>";
-        createActionButtonsForTab( result.id );
+        output.innerHTML = "<div class='floatInput'>" + window.markdownReturn( result.prompt ) + "</div><div class='floatOutput flex flex-col gap-2'>" + window.markdownReturn( result.response ) + "<div id='AIresponseButtonRow'></div></div>";
+        createActionButtonsForHistoryItemPreview( localID, result );
       });
 
     }
 
-    async function addCopyButtonToCompletedResponse( id ) {
-            
-      const targ = document.getElementById('responseOutput');
+    async function clipboardCopy( result ) {
 
-      // delete button (remove tab + content + stored entry)
-      const clipboardButton = document.createElement('button');
-
-      clipboardButton.className = 'px-4 py-4 font-semibold flex flex-row text-sm bg-gray-100 mb-4 mt-6 text-stone-800 rounded-2xl shadow-sm w-40 hover:shadow-lg';
-      clipboardButton.innerHTML = '<i data-lucide="copy" class="w-4 h-4 mx-4 text-purple-600"></i>markdown';
-      clipboardButton.onclick = function() {
-        clipboardCopy( id );
-      };
-
-      targ.appendChild(clipboardButton);
-
-      lucide.createIcons();
-
-    }
-
-    async function clipboardCopy( id ) {
-
-      const result = await readTab( appPrefix + id );
+      // const result = await readTab( appPrefix + id );
 
       if ( !result ) {
-        console.error( 'No result found for ID:', id );
+        console.error( 'No match found' );
         return;
       }
 
-      const textToCopy = `Input: ${result.input}\nResponse: ${result.response}`;
+      // const textToCopy = `Input: ${result.input}\nResponse: ${result.response}`;
+      const textToCopy = result.response;
 
       if ( navigator.clipboard ) {
         try{ 
@@ -394,9 +411,9 @@
 
     }
 
-    async function createActionButtonsForTab( id ) {
+    async function createActionButtonsForHistoryItemPreview( id, result ) {
 
-      console.log( 'createActionButtonsForTab', id );
+      console.log( 'createActionButtonsForHistoryItemPreview', id );
 
       const targ = document.getElementById('responseOutput');
 
@@ -409,7 +426,7 @@
       clipboardButton.className = 'px-4 py-4 font-semibold flex flex-row text-sm bg-gray-100 mb-4 mt-6 text-stone-800 rounded-2xl shadow-sm w-40 hover:shadow-lg';
       clipboardButton.innerHTML = '<i data-lucide="copy" class="w-4 h-4 mx-4 text-purple-600"></i>markdown';
       clipboardButton.onclick = function() {
-        clipboardCopy( id );
+        clipboardCopy( result );
       };
 
       buttonRow.appendChild(clipboardButton);
@@ -420,7 +437,7 @@
       deleteButton.className = 'px-4 py-2 font-semibold text-sm bg-gray-100 mb-4 mt-6 text-stone-800 rounded-2xl shadow-sm w-40 hover:shadow-lg';
       deleteButton.innerText = 'Delete';
       deleteButton.onclick = function() {
-        deleteTab( id );
+        deleteHistoryItem( id );
       };
 
       buttonRow.appendChild(deleteButton);
@@ -448,7 +465,7 @@
 
       for ( let i = 0; i < arrStoredSearches.length; i++ ) {
 
-        addToTabList( arrStoredSearches[ i ] );
+        addToHistoryList( arrStoredSearches[ i ] );
 
       }
 
@@ -460,13 +477,11 @@
 
     }
 
-    async function deleteTab( id ) {
+    async function deleteHistoryItem( id ) {
 
-      console.log( 'deleteTab', id );
+      localStorage.removeItem( id );
 
-      localStorage.removeItem( appPrefix + id );
-
-      document.getElementById( appPrefix + id ).remove();
+      document.getElementById( id ).remove();
 
       const output = document.getElementById('responseOutput');
 
@@ -484,15 +499,9 @@
           <div class="flex m-auto">
             <p class="text-sm font-medium text-gray-900">Success!</p>
           </div>
-          <button onclick="document.getElementById('notification').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-            ✕
-          </button>
+          <button onclick="document.getElementById('notification').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 flex h-8 w-6 mt-0">✕</button>
         </div>`;
         output.innerHTML = result; //window.markdownReturn( result );
-
-        // setTimeout(() => {
-        //   output.innerHTML = 'Your generated output will appear here...';
-        //   }, 2000);
 
       }, 200);
 
