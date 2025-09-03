@@ -31,12 +31,13 @@
       overflow: auto;
       background-color: #fff;
       flex-direction: column;
-      max-width: 600px;
+      max-width: 635px;
       margin: 0 auto;
+      gap: 0;
     }
 
     #responseOutput > p {
-        margin: 4px;
+        margin: 4px 0;
     }
 
     #responseOutput table {
@@ -48,7 +49,8 @@
     }
 
     #responseOutput ol, #responseOutput ul, #responseOutput li {
-        margin: 0;
+        margin: 0 0 8px 0;
+        /* display: ruby-text; */
     }
 
     #responseOutput pre {
@@ -99,7 +101,7 @@
       border-left: 4px solid #E1FBDF;
       border-top: 4px solid #E1FBDF;
       border-bottom: 4px solid #E1FBDF;
-      max-width: 500px;
+      max-width: 635px;
     }
     .floatOutput {
       border-radius: 1rem 1rem 1rem;

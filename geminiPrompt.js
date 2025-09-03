@@ -104,8 +104,8 @@ export class GeminiPrompt {
 
   async destroy() {
 
-    if ( this.promptLanguageModel?.promptLanguageModel !== undefined ) this.promptLanguageModel = await LanguageModel.destroy();
-    
+    if ( this.promptLanguageModel ) this.promptLanguageModel = await this.promptLanguageModel.destroy();
+    this.promptLanguageModel = undefined;
     return this.promptLanguageModel;
 
   }
@@ -161,6 +161,7 @@ export class GeminiPrompt {
     }
     if (callback && typeof callback === 'function') callback( allChunks );
     this.running = false;
+    console.log(`${this.promptLanguageModel.inputUsage}/${this.promptLanguageModel.inputQuota}`);
   }
 
   async stop() {

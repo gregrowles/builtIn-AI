@@ -158,13 +158,91 @@
 
   }
 
+  // Function to run the api fetch
+  async function testAPIurl ( args, callback ) {
+  
+    console.log('testAPIurl called with args:', args);
+    let _headers = { 'Content-Type': args?.contentType || 'application/json' };
+    // let _body = args?.basicAuth ? null : args?.username?.length && args?.password?.length ? JSON.stringify( { username: args?.username, password: args?.password } ) : null;
+
+    if ( args?.username?.length && args?.password?.length ) {
+      const encodedCredentials = btoa( args.username + ':' + args.password );
+      _headers['Authorization'] = 'Basic ' + encodedCredentials;
+    }
+
+    if ( args?.accessToken ) {
+      const encodedCredentials = btoa( args.username + ':' + args.password );
+      _headers['Authorization'] = 'Bearer ' + encodedCredentials;
+    }
+
+    try{
+      const response = await fetch( args?.url, {
+        method: args?.method || 'GET',
+        headers: _headers,
+        // body: _body
+      });
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Login successful:', data);
+        callback( data );
+      } else {
+        console.error('Login failed:', response.status, response.statusText);
+        callback( { error: 'Fetch failed', status: response.status, statusText: response.statusText } );
+      }
+    }
+    catch(e){
+      console.error('Error during fetch:', e);
+      callback( { error: e.message } );
+      return;
+    }
+    
+  
+}
+
+
   async function destroyLanguageModel() {
     promptLanguageModel.destroy();
   }
 
+  
+  async function aboutGemini( ) {
+
+    // const inputText = document.getElementById('geminiInputText').value;
+    // const output = document.getElementById('responseOutput');
+    // output.textContent = 'Checking...';
+
+    setTimeout(() => {
+      let result =  '**Gemini Nano** \n\n' +
+                    ' The following list of features are available/enabled on your machine: \n' +
+                    '| Feature | Supported | Purpose |\n'+
+                    '| --- | --- | --- |\n' +
+                  //  '| Summarize | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} | Summarizing narratives, articles or messages |\n' +
+                    '| Summarize | ' + ( 'Summarizer' in self ? '&#10003;' : ' ' ) + ' | Summarizing narratives, articles or messages|\n' +
+                    '| Translate (en - fr) | ' + ( 'Translator' in self ? '&#10003;' : ' ' ) + ' | Translation of texts into other langages (en-fr defaulted) |\n' +
+                    '| Rewrite | ' + ( 'Rewriter' in self ? '&#10003;' : ' ' ) + ' | Rewrite texts to sound more polite or formal |\n' +
+                  //  '| Prompt | ${( 'prompt' in self ? '&#10003;' : ' ' )} |\n' +
+                    '| Prompt | ' + ( 'prompt' in self ? '&#10003;' : ' ' ) + ' | Answer questions based on provided texts or general Q&A|\n\n' +
+                    '**Getting Started** \n\n' + 
+                    'Gemini (Nano) is an experimental AI feature (under Chrome)\n' + 
+                    'How to Enable Foundational Model (e.g. v2Nano) \n' + 
+                    '1. Copy reserved URL _chrome://flags/#prompt-api-for-gemini-nano_ and paste into new tab \n' + 
+                    '2. Enable feature and restart chrome \n\n' +
+                    'Note: Individual features may require separate settings to be enabled ([rewriter](chrome://flags/#rewriter-api-for-gemini-nano));' + 
+                    'visit developer site to [Learn more](https://developer.chrome.com/docs/ai/get-started) \n\n' +
+                    '**Operating system**\n\nWindows 10 or 11; macOS 13+ (Ventura and onwards); or Linux. Chrome for Android, iOS, and ChromeOS are not yet supported by the APIs which use Gemini Nano.  \n' +
+                    '**Storage**\n\nAt least 22 GB of free space on the volume that contains your Chrome profile  \n';
+
+      // output.innerHTML = "<div class='floatOutput'>" + window.markdownReturn( result ) + "</div>";
+      markdownOutput( result );
+    }, 100);
+  }
+
+
   function generateRandomId(length = 10) {
     return Math.random().toString(36).substring(2, length + 2);
   }
+
+
 
   // Expose functions to the global scope
   window.promptCharacters = promptLanguageModel.characters;
@@ -176,5 +254,7 @@
   window.runPromptStream = runPromptStream;
   window.runPromptStreamJsonInput = runPromptStreamJsonInput;
   window.destroyLanguageModel = destroyLanguageModel;
+  window.testAPIurl = testAPIurl;
   window.markdownReturn = markdownReturn;
   window.markdownOutput = markdownOutput;
+  window.aboutGemini = aboutGemini;
