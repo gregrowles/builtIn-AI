@@ -16,15 +16,11 @@
 
     <!-- Sidebar / History -->
     <aside class="w-1/4 bg-gray-50 border-r p-4 space-y-4 historySidebar">
-      <div class="flex items-center justify-between">
+      <!-- <div class="flex items-center justify-between">
         <button id="aboutGemini" class="text-gray-600 border rounded-lg p-2 shadow-sm overflow-hidden max-h-10 content-center text-sm flex">
           about
         </button>
-        <!-- <i data-lucide="play" class="w-5 h-5 text-gray-400 pr-1"></i> -->
-        <!-- <button id="helpBtn" class="p-2 rounded-lg hover:bg-gray-200" title="Help">
-          <i data-lucide="info" class="w-5 h-5 text-gray-700"></i>
-        </button> -->
-      </div>
+      </div> -->
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold">History</h3>
         <!-- <button id="settingsBtn" class="p-2 rounded-lg hover:bg-gray-200" title="Settings">
@@ -38,11 +34,17 @@
 
     <!-- Main Content -->
     <main class="flex-1 p-4 space-y-4">
-      <h1 class="text-2xl font-bold text-center mb-4">AI Prompt Builder</h1>
+      <h1 class="text-2xl font-bold text-center mb-4">
+        AI Prompt Designer
+        <button id="aboutGemini" class="p-2 w-8 h-8 rounded-lg hover:bg-gray-200 ml-auto" title="Help">
+          <i data-lucide="info" class="w-4 h-4 text-gray-700"></i>
+        </button>
+      
+      </h1>
 
       <!-- Tabs for Generate / Output -->
       <div class="border-b mb-4 flex">
-        <button class="tabInput tab-btn px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600" data-target="generateTab">Build</button>
+        <button class="tabInput tab-btn px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600" data-target="generateTab">Builder</button>
         <button class="tabOutput tab-btn px-4 py-2 font-medium text-gray-600 hover:text-blue-600" data-target="outputTab">Preview</button>
       </div>
 
@@ -93,7 +95,7 @@
                 <div class="flex bg-gray-100 border-b text-sm">
                   <a class="subtab-btn px-4 py-2 font-medium text-blue-600 hover:text-blue-600 border-blue-600 border-b-2" data-target="pasteInput">Input Text</a>
                   <a class="subtab-btn px-4 py-2 font-medium text-gray-600 hover:text-blue-600" data-target="pasteInputTable">Markdown Table</a>
-                  <a class="subtab-btn px-4 py-2 font-medium text-gray-600 hover:text-blue-600" data-target="inputAPI">API (GET)</a>
+                  <a class="subtab-btn px-4 py-2 font-medium text-gray-600 hover:text-blue-600" data-target="inputAPI">API (fetch)</a>
                 </div>
 
                 <div class="p-4">
@@ -163,17 +165,20 @@
               </button>
             </div>
             <div id="promptInstructions" class="hidden">
+
               <textarea id="prompt" rows="3" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Describe the output you want (e.g., bullet points, summary table, expanded summary, key points, etc)..."></textarea>
+
+              <!-- Submit Button -->
+              <div class="flex justify-center my-3">
+                <a id="submit" class="btnSubmitToAI bg-blue-600 hover:bg-blue-700 flex text-white items-center px-6 py-3 rounded-xl shadow-md transition hover:shadow-lg">
+                  <i data-lucide="play" class="w-5 h-5 text-white-400 pr-1 mr-1"></i>
+                  Run
+                </a>
+              </div>
+            
             </div>
           </div>
 
-
-        <!-- Submit Button -->
-        <div class="flex justify-center">
-          <a id="submit" class="btnSubmitToAI bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-md transition hover:shadow-lg">
-            Run
-          </a>
-        </div>
 
       </form>
 

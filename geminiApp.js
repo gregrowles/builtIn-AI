@@ -170,7 +170,7 @@
   
     console.log('testAPIurl called with args:', args);
     let _headers = { 'Content-Type': args?.contentType || 'application/json' };
-    // let _body = args?.basicAuth ? null : args?.username?.length && args?.password?.length ? JSON.stringify( { username: args?.username, password: args?.password } ) : null;
+    let _body = args?.body ? args?.body : null;
 
     if ( args?.username?.length && args?.password?.length ) {
       const encodedCredentials = btoa( args.username + ':' + args.password );
@@ -186,7 +186,7 @@
       const response = await fetch( args?.url, {
         method: args?.method || 'GET',
         headers: _headers,
-        // body: _body
+        body: _body
       });
       if (response.ok) {
         const data = await response.json();
