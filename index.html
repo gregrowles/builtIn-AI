@@ -350,6 +350,11 @@
       addToHistoryList( result );
       createActionButtonsForHistoryItemPreview( appPrefix + ':history:' + result.id, result );
 
+      // playing around with auto-translate
+      // window.runTranslator( result.response, ( translation ) => {
+      //   console.log( 'translation', translation );
+      // })
+
     }
 
     async function addToHistoryList( result ) {

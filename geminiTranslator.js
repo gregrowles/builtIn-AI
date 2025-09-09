@@ -9,6 +9,7 @@ export class GeminiTranslator {
   async init( sourceLang = 'en', targetLang = 'fr' ) {
     if (this.translator) return;
     if( this.onResponse ) this.onResponse(  `creating *translator*` );
+    console.log(`translator init: [${sourceLang || 'en'}] - [${targetLang || 'fr'}]`);
     this.translator = await Translator.create({
         sourceLanguage: sourceLang || 'en',
         targetLanguage: targetLang || 'fr',
