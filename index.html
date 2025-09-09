@@ -16,19 +16,12 @@
 
     <!-- Sidebar / History -->
     <aside class="w-1/4 bg-gray-50 border-r p-4 space-y-4 historySidebar">
-      <!-- <div class="flex items-center justify-between">
-        <button id="aboutGemini" class="text-gray-600 border rounded-lg p-2 shadow-sm overflow-hidden max-h-10 content-center text-sm flex">
-          about
-        </button>
-      </div> -->
+
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold">History</h3>
-        <!-- <button id="settingsBtn" class="p-2 rounded-lg hover:bg-gray-200" title="Settings">
-          <i data-lucide="settings" class="w-5 h-5 text-gray-700"></i>
-        </button> -->
+
       </div>
       <div id="history" class="space-y-2 text-sm text-gray-700 overflow-y-auto max-h-[70vh]">
-        <!-- <p class="bg-white border rounded-lg p-2 shadow-sm">Example prompt #1</p> -->
       </div>
     </aside>
 
@@ -164,12 +157,12 @@
                 <i data-lucide="chevron-down" class="w-5 h-5 text-gray-600"></i>
               </button>
             </div>
-            <div id="promptInstructions" class="hidden">
+            <div id="promptInstructions" class="hidden p-4">
 
-              <textarea id="prompt" rows="3" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Describe the output you want (e.g., bullet points, summary table, expanded summary, key points, etc)..."></textarea>
+              <textarea id="prompt" rows="3" class="w-full rounded-lg border-green-400 ring-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Describe the output you want (e.g., bullet points, summary table, expanded summary, key points, etc)..."></textarea>
 
               <!-- Submit Button -->
-              <div class="flex justify-center my-3">
+              <div class="flex justify-center mt-3">
                 <a id="submit" class="btnSubmitToAI bg-blue-600 hover:bg-blue-700 flex text-white items-center px-6 py-3 rounded-xl shadow-md transition hover:shadow-lg">
                   <i data-lucide="play" class="w-5 h-5 text-white-400 pr-1 mr-1"></i>
                   Run
