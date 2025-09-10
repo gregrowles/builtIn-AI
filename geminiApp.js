@@ -219,7 +219,16 @@
     // output.textContent = 'Checking...';
 
     setTimeout(() => {
-      let result =  '**Gemini Nano** \n\n' +
+      let result =  '__Gemini Nano__ is an experimental feature that must be enabled (manually). It runs locally within your Chrome browser unlike other Gemini models that can only be accessed through ' +
+                    'a cloud-based API. The "built-in" part signifies local, on-device processing with reduced latency and enhanced privacy. \n\n' +
+                    'Key differences include where the model runs (on your device vs. in the cloud), which affects performance, data privacy, ' +
+                    'and the types of tasks that can be performed. \n\n' + 
+                    '_Gemini Nano Built-In (i.e. in Chrome)_\n' +
+                    '+ __Local Processing__:\n' +
+                    '- The model runs entirely on your device using WebAssembly/WebGPU, without sending data to the cloud. \n\n' +
+                    '+ __Performance__:\n' + 
+                    '- Optimized for smaller, common tasks like summarization and classification, leveraging on-device hardware acceleration. \n\n' + 
+                    '**Gemini Nano** \n\n' +
                     ' The following list of features are available/enabled on your machine: \n' +
                     '| Feature | Supported | Purpose |\n'+
                     '| --- | --- | --- |\n' +

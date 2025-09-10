@@ -10,6 +10,9 @@
       min-width: 25%;
     }
 
+    #generateTab {
+      max-height: calc(100vh - 210px);
+    }
     .inputsRow {
       display: flex;
       gap: 1em;
@@ -27,14 +30,14 @@
       white-space: pre-wrap;
       border: none;
       padding: 0;
-      display: inline-flex;
+      display: flex;
       overflow: auto;
       background-color: #fff;
       flex-direction: column;
       max-width: 635px;
       margin: 0 auto;
       gap: 0;
-      height: calc(100vh - 210px);
+      height: calc(100vh - 220px);
     }
 
     #responseOutput > p {
