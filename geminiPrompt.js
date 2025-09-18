@@ -96,7 +96,14 @@ export class GeminiPrompt {
       initialPrompts: [ { role: 'system', content: this.defaults } ],   
     };
 
-    this.promptLanguageModel = await LanguageModel.create( options );
+    try{
+      this.promptLanguageModel = await LanguageModel.create( options );
+    }
+    catch(e){
+      console.error("Error loading LanguageModel:", e);
+      if( this.onResponse ) this.onResponse(  "LanguageModel failed: " + e.message );
+      return;
+    }
 
     if( this.onResponse ) this.onResponse(  "LanguageModel initialized.\nThinking..." );
     console.log("LanguageModel initialized.");

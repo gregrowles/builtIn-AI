@@ -169,7 +169,7 @@
   async function testAPIurl ( args, callback ) {
   
     console.log('testAPIurl called with args:', args);
-    let _headers = { 'Content-Type': args?.contentType || 'application/json' };
+    let _headers = ! args?.accessToken ? { 'Content-Type': args?.contentType || 'application/json' } : {} ;
     let _body = args?.body ? args?.body : null;
 
     if ( args?.username?.length && args?.password?.length ) {
@@ -178,8 +178,7 @@
     }
 
     if ( args?.accessToken ) {
-      const encodedCredentials = btoa( args.username + ':' + args.password );
-      _headers['Authorization'] = 'Bearer ' + encodedCredentials;
+      _headers['Authorization'] = 'ApiToken ' + args?.accessToken;
     }
 
     try{
