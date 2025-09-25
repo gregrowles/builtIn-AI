@@ -347,16 +347,33 @@
       if ( timedResponses ) result[ 'started' ] = lastRequest;
       if ( timedResponses ) result[ 'completed' ] = Date.now();
 
-      addToHistoryList( result );
-      createActionButtonsForHistoryItemPreview( appPrefix + ':history:' + result.id, result );
+      const inputPrompt = document.getElementById('promptInstructions').getElementsByTagName( 'textarea' )[0].value || '';
+      var promptText = 'Summarize the following sentence/input into no more than 8 words: ' + inputPrompt;
 
-      // playing around with auto-translate
-      // window.runTranslator( result.response, ( translation ) => {
-      //   console.log( 'translation', translation );
-      // })
+      window.runPromptGet( promptText, ( newTitle ) => {
+    
+        result.title = newTitle || result.title;
+        addToHistoryList( result );
+        createActionButtonsForHistoryItemPreview( appPrefix + ':history:' + result.id, result );
 
+      });
+
+    
     }
 
+    async function summariseLastPromptCompleted( result ) {
+
+      console.log( 'summariseLastPromptCompleted', result );
+
+      // const lastPrompt = document.getElementById('promptInstructions').getElementsByTagName( 'textarea' )[0].value || '';
+
+      // if ( result && result.response && result.response.length ) {
+      //   document.getElementById('promptInstructions').getElementsByTagName( 'textarea' )[0].value = result.response;
+      // } else {
+      //   document.getElementById('promptInstructions').getElementsByTagName( 'textarea' )[0].value = lastPrompt;
+      // }
+
+    }
     async function addToHistoryList( result ) {
         
       const localID = appPrefix + ':history:' + result.id;

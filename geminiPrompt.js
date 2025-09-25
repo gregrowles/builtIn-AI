@@ -110,6 +110,8 @@ export class GeminiPrompt {
           'Strategic, conceptual, emphasizes complexity and ripple effects.',
       },
     ];
+
+    this.modelParameters = null;
   }
 
   /** Internal: emit UI updates safely */
@@ -148,6 +150,8 @@ export class GeminiPrompt {
           const controller = new AbortController();
           const options = {
             signal: controller.signal,
+            // temperature: Math.max(params.defaultTemperature * 1.2, 2.0),
+            // topK: params.defaultTopK,
             // model: 'gemini-1.5-flash', // optional: uncomment if explicit model selection is desired
             initialPrompts: [{ role: 'system', content: this._systemPrompt }],
           };
@@ -155,6 +159,9 @@ export class GeminiPrompt {
           // LanguageModel is provided by the browser (Chrome built-in AI).
           // eslint-disable-next-line no-undef
           this.promptLanguageModel = await LanguageModel.create(options);
+          const params = await LanguageModel.params();
+          this.modelParameters = params;
+          console.log('params', params);
           this._emit('LanguageModel initialized.\nThinking...');
           // ...existing code...
           // ...existing code...

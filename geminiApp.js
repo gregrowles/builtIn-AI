@@ -119,6 +119,15 @@ async function runPrompt(inpText, callback) {
   });
 }
 
+async function runPrompt_withGet(inpText, callback) {
+  await promptLanguageModel.init();
+  await promptLanguageModel.prompt(inpText, (summary) => {
+    if (typeof callback === 'function') {
+      callback( summary );
+    }
+  });
+}
+
 async function runPromptStream(inpText, callback) {
   await promptLanguageModel.init();
   await promptLanguageModel.promptStream(inpText, markdownOutput, (streamFinal) => {
@@ -245,11 +254,13 @@ async function aboutGemini() {
 
 // Expose functions to the global scope
 window.promptCharacters = promptLanguageModel.characters;
+window.languageModelParameters = promptLanguageModel.modelParameters;
 window.runSummarizer = runSummarizer;
 window.runSummarizerStream = runSummarizerStream;
 window.runTranslator = runTranslator;
 window.runRewriter = runRewriter;
 window.runPrompt = runPrompt;
+window.runPromptGet = runPrompt_withGet;
 window.runPromptStream = runPromptStream;
 window.runPromptStreamJsonInput = runPromptStreamJsonInput;
 window.destroyLanguageModel = destroyLanguageModel;
