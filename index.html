@@ -1,24 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gemini (builtIn AI) Interface</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Prompt Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js"></script>
   <script type="module" src="geminiApp.js"></script>
-  <link rel="stylesheet" href="style.css" />
+  <link href="style.css" rel="stylesheet">
 </head>
+<body class="bg-gray-100 text-gray-900 min-h-screen flex items-baseline justify-center p-6">
 
-<body>
+  <div class="w-full max-w-6xl bg-white rounded-2xl shadow-xl flex overflow-auto min-h-wfa">
 
-  <div class="container">
+    <!-- Sidebar / History -->
+    <aside class="w-1/4 bg-gray-50 border-r p-4 space-y-4 historySidebar">
 
-    <!-- Input Panel -->
-    <div class="panel input">
-      <div style="display: flex;">
-        <h2>
-          Input Text 
-        </h2>
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold">History</h3>
+
+      </div>
+      <div id="history" class="space-y-2 text-sm text-gray-700 overflow-y-auto max-h-[70vh]">
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4 space-y-4">
+      <h1 class="text-2xl font-bold text-center mb-4">
+        AI Prompt Designer
+        <button id="aboutGemini" class="p-2 w-8 h-8 rounded-lg hover:bg-gray-200 ml-auto" title="Help">
+          <i data-lucide="info" class="w-4 h-4 text-gray-700"></i>
+        </button>
+      
+      </h1>
+
+      <!-- Tabs for Generate / Output -->
+      <div class="border-b mb-4 flex">
+        <button class="tabInput tab-btn px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600" data-target="generateTab">Builder</button>
+        <button class="tabOutput tab-btn px-4 py-2 font-medium text-gray-600 hover:text-blue-600" data-target="outputTab">Preview</button>
+      </div>
+
+      <form id="generateTab" class="tab-content space-y-4">
+
+        <!-- Thought Process Selection -->
+        <div class="border rounded-lg p-2">
+            <div class="flex items-center justify-between px-2">
+              <label class="block text-sm font-medium">
+                <div class="flex items-center space-x-2">
+                  <i data-lucide="brain-cog" class="w-4 h-4 text-purple-600"></i>
+                  <span>AI Persona</span>
+                </div>
+                <span class="text-gray-500 text-xs">(How should the AI reason for the target audience?)</span>
+              </label>
+              <button type="button" class="collapse-btn content-start	" data-target="promptCharacter">
+                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-600"></i>
+              </button>
+            </div>
+            <div id="promptCharacter" class="hidden">
+              <select id="character" class="w-full text-sm rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 p-3">
+                <!-- <option value="step">Step-by-Step Reasoning (educational, transparent)</option>
+                <option value="expert">Expert Summary (concise, professional)</option>
+                <option value="creative">Creative Exploration (brainstorm, divergent)</option>
+                <option value="simple">Simplified Explanation (for beginners, non-technical)</option>
+                <option value="critical">Critical Analysis (deep dive, pros/cons)</option> -->
+              </select>
+            </div>
+        </div>
+        
+        <!-- Context Info -->
+        <div class="border rounded-lg p-2">
+            <div class="flex items-center justify-between px-2">
+              <label class="block text-sm font-medium">
+                <div class="flex items-center space-x-2">
+                  <i data-lucide="clipboard" class="w-4 h-4 text-blue-600"></i>
+                  <span>Input Context Information</span>
+                  <!-- <i data-lucide="asterisk" class="w-3 h-3 text-red-600"></i> -->
+                </div>
+                <span class="text-gray-500 text-xs">(Provide input texts / table data to be considered for the transformation)</span>
+              </label>
+              <button type="button" class="collapse-btn content-start	" data-target="contextContent">
+                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-600"></i>
+              </button>
+            </div>
+            <div id="contextContent" class="hidden">
+              <div class="border rounded-lg overflow-hidden">
+                <div class="flex bg-gray-100 border-b text-sm">
+                  <a class="subtab-btn px-4 py-2 font-medium text-blue-600 hover:text-blue-600 border-blue-600 border-b-2" data-target="pasteInput">Input Text</a>
+                  <a class="subtab-btn px-4 py-2 font-medium text-gray-600 hover:text-blue-600" data-target="pasteInputTable">Markdown Table</a>
+                  <a class="subtab-btn px-4 py-2 font-medium text-gray-600 hover:text-blue-600" data-target="inputAPI">API (fetch)</a>
+                </div>
+
+                <div class="p-4">
+
+                  <!-- Input/Paste Input -->
+                  <div id="pasteInput" class="subtab-content">
+                    <textarea rows="4" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Insert input text data here..."></textarea>
+                  </div>
+                  
+                  <!-- Input/Paste Markdown table -->
+                  <div id="pasteInputTable" class="subtab-content hidden">
+                    <textarea rows="4" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Insert markdown table data here..."></textarea>
+                  </div>
+
+                  <!-- Input/Paste Markdown table -->
+                  <div id="inputAPI" class="subtab-content hidden">
+                    <input type="text" id="url" class="w-full rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="URL" value="https://punkapi.online/v3/beers/random">
+
+                    <!-- <label class="flex items-center space-x-2 text-sm mt-4 mb-4 cursor-pointer">
+                      <input type="checkbox" class="rgp rgq rha rhi rhj rhk rhn rig rii rik rim rin rio riq rir rit riv rjm" id="basicAuth">
+                      <span>Basic Auth</span> -->
+
+                    <div class="flex items-center space-x-2 text-sm mb-6 ml-2">
+                      <input type="radio" id="option1" name="apiSecurity" value="simple" data-target="none" class="apiSecurity form-radio text-blue-600" checked />
+                      <label for="option1" class="text-gray-700 pr-4">simple</label>
+
+                      <input type="radio" id="option2" name="apiSecurity" value="basic" data-target="basic" class="apiSecurity form-radio text-blue-600" />
+                      <label for="option2" class="text-gray-700 pr-4">basic Auth</label>
+
+                      <input type="radio" id="option3" name="apiSecurity" value="token" data-target="token" class="apiSecurity form-radio text-blue-600" />
+                      <label for="option3" class="text-gray-700">access Token</label>
+                    </div>
+
+                    <div id="basic" class="hidden apiSecurity-target">
+                      <input type="text" id="username" class="w-full rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Username">
+                      <input type="password" id="password" class="w-full rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Password">
+                    </div>
+                    <div id="token" class="hidden apiSecurity-target">
+                      <input type="text" id="accessToken" class="w-10/12 rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Access Token">
+                    </div>
+
+                    <a id="testURL" class="text-gray-600 flex border rounded-lg mt-2 p-2 shadow-sm overflow-hidden max-h-8 max-w-20 content-center items-center text-xs cursor-pointer	">
+                      test url 
+                      <i data-lucide="play" class="playing w-3 h-3 mx-auto text-gray-500 ml-1 show"></i>
+                      <i data-lucide="loader" class=" loading w-4 h-4 mx-auto	animate-spin text-gray-500 ml-1 hidden"></i>
+                    </a>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+        <!-- AI Prompt Requirements/Transformation -->
+        <div class="rounded-lg pb-2">
+            <div class="flex items-center justify-between px-2 hidden">
+              <label class="block text-sm font-medium">
+                <div class="flex items-center space-x-2">
+                  <i data-lucide="square-chevron-right" class="w-4 h-4 text-green-600"></i>
+                  <span>Transform Instructions</span>
+                </div>
+                <span class="text-gray-500 text-xs">(How should the model transform output result)</span>
+              </label>
+              <button type="button" class="collapse-btn content-start	" data-target="promptInstructions">
+                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-600"></i>
+              </button>
+            </div>
+            <div id="promptInstructions" class="pb-2">
+
+              <textarea id="prompt" rows="3" class="w-full rounded-lg border-green-400 ring-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Describe the output you want (e.g., bullet points, summary table, expanded summary, key points, etc)..."></textarea>
+
+              <!-- Submit Button -->
+              <div class="flex justify-center mt-3">
+                <a id="submit" class="btnSubmitToAI bg-blue-600 hover:bg-blue-700 flex text-white items-center px-6 py-3 rounded-xl shadow-md transition hover:shadow-lg">
+                  <i data-lucide="play" class="w-5 h-5 text-white-400 pr-1 mr-1"></i>
+                  Run
+                </a>
+              </div>
+            
+            </div>
+          </div>
+
+
+      </form>
+
+      <!-- Output Tab -->
+      <div id="outputTab" class="tab-content hidden" style="height:75vh">
+        <div id="responseOutput" class="gap-y-3 rounded-lg bg-stone-50 p-4 text-gray-800 overflow-y-auto" style="height:75vh">
+          Your generated output will appear here...
+        </div>
+      </div>
+
+      
+    </main>
+  </div>
+
+  <!-- Save As -->
+  <div id="savePrompt" class="hidden fixed top-64 left-25 max-w-sm w-full bg-white shadow-lg rounded-2xl p-4 items-start gap-3 transition transform translate-y-0 opacity-100">
+    <div class="flex items-center justify-between w-full mb-4">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Save Prompt</h2>
+      <button onclick="document.getElementById('savePrompt').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+              ✕
+      </button>
       </div>
 
       <textarea id="inputText" placeholder="What is today's date?"></textarea>
@@ -37,45 +212,128 @@
         <div style="font-size: 12px; border: 1px dotted #AAA;padding:2px;margin:auto" id="hint"></div>
         <!-- <div id="stop" class="floatButton">⏹</div> -->
       </div>
-    </div>
 
-    <!-- Output Panel -->
-    <div class="panel output">
-      <h2>AI Response</h2>
-      <div id="tabList">
-        <div id="about" class="floatButton">about</div>
+      <!-- Group -->
+      <div>
+        <!-- <label class="block text-sm font-medium text-gray-700">Under Group</label> -->
+        <input type="text" placeholder="Description (optional)"
+          class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 mb-10" />
       </div>
-      <div id="responseOutput">Awaiting input...</div>
-    </div>
+
+      <!-- Button -->
+      <a id="saveAs"
+        class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500">
+        Save
+    </a>
+    </form>
   </div>
 
-<script type="text/javascript">
+  <script>
 
-  // note - move to geminiApp.js
+    lucide.createIcons();
 
-  const appPrefix = 'geminiNanoBuiltInApp:';
-  const timedResponses = true;
-  var lastRequest = null;
+    /* DEFAULTS go here */
+    
+
+    /* EVENTS go here */
+    // Main tab switching logic
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('text-blue-600', 'border-blue-600', 'border-b-2' ));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('text-gray-600'));
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.add('hidden'));
+
+        btn.classList.add('text-blue-600', 'border-blue-600', 'border-b-2');
+        btn.classList.remove('text-gray-600');
+        document.getElementById(btn.dataset.target).classList.remove('hidden');
+      });
+    });
+
+    // Subtab switching logic
+    document.querySelectorAll('.subtab-btn').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('text-blue-600', 'border-blue-600', 'border-b-2' ));
+        document.querySelectorAll('.subtab-btn').forEach(b => b.classList.add('text-gray-600'));
+        document.querySelectorAll('.subtab-content').forEach(tc => tc.classList.add('hidden'));
+
+        tab.classList.add('text-blue-600', 'border-blue-600', 'border-b-2');
+        tab.classList.remove('text-gray-600');
+        document.getElementById(tab.dataset.target).classList.remove('hidden');
+      });
+    });
+
+    // Collapse toggle logicƒ
+    document.querySelectorAll('.collapse-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = document.getElementById(btn.dataset.target);
+          const icon = btn.querySelector('svg');
+          if (target.classList.contains('hidden')) {
+            target.classList.remove('hidden');
+            icon.setAttribute('data-lucide', 'chevron-up');
+          } else {
+            target.classList.add('hidden');
+            icon.setAttribute('data-lucide', 'chevron-down');
+          }
+          lucide.createIcons();
+        });
+    });
+
+    // Collapse toggle logicƒ
+    document.querySelectorAll('.apiSecurity').forEach(rad => {
+        rad.addEventListener('change', () => {
+          
+          document.querySelectorAll('.apiSecurity-target').forEach(targ => {
+              targ.classList.add('hidden');
+            })
+
+          if ( rad.dataset.target == 'none' ) {} 
+          else{
+            const target = document.getElementById(rad.dataset.target);
+            if (target.classList.contains('hidden')) {
+              target.classList.remove('hidden');
+            } else {
+              target.classList.add('hidden');
+            }
+          }
+          
+          lucide.createIcons();
+        });
+    });
+
+
+
+    const appPrefix = 'geminiNanoBuiltInApp:';
+    const timedResponses = true;
+    let lastRequest = null;
+    const idxCharacters = {};
 
     async function submitToAI() {
 
-      const action = document.getElementById('actionSelect').value;
-      const inputText = document.getElementById('inputText').value.length ? document.getElementById('inputText').value : document.getElementById('inputText').getAttribute('placeholder');
+      const promptObj = { defaultPrompt: 'You are a ' + idxCharacters[ document.getElementById('character').value ].name + '. Your style:' + idxCharacters[ document.getElementById('character').value ].style + '. Your tone: ' + idxCharacters[ document.getElementById('character').value ].tone + '. Your approach: ' + idxCharacters[ document.getElementById('character').value ].approach };
+      let promptText = '';
+
+      const inputText = document.getElementById('pasteInput').getElementsByTagName('textarea')[0].value || '';
+      const inputTable = document.getElementById('pasteInputTable').getElementsByTagName('textarea')[0].value || '';
+      const inputPrompt = document.getElementById('promptInstructions').getElementsByTagName('textarea')[0].value || '';
+
+      if (inputText.length) promptText += 'Context: ' + inputText + '\n\n';
+      if (inputTable.length) promptText += 'Context (supporting table data): ' + inputTable + '\n\n';
+      if (inputPrompt.length) promptText += 'Your instructions: ' + inputPrompt + '\n\n';
+
+      promptObj['title'] = inputPrompt;
+      promptObj['prompt'] = promptText;
+      promptObj['character'] = document.getElementById('character').value;
+
       const output = document.getElementById('responseOutput');
       output.textContent = 'Thinking...';
 
-      if ( timedResponses ) lastRequest = Date.now();
-      // document.getElementById('stop').style.display = 'inline-block';
+      if (timedResponses) lastRequest = Date.now();
+      console.log('promptObj', promptObj);
+
+      document.getElementsByClassName('tabOutput')[0].click();
 
       setTimeout(() => {
-        
-        if ( action === 'summarize' ) window.runSummarizer( inputText, submitToAIcompleted );
-        if ( action === 'summarizeStream' ) window.runSummarizerStream( inputText, submitToAIcompleted );
-        if ( action === 'translate' ) window.runTranslator( inputText, submitToAIcompleted );
-        if ( action === 'rewrite' ) window.runRewriter( inputText, submitToAIcompleted );
-        if ( action === 'prompt' ) window.runPrompt( inputText, submitToAIcompleted );
-        if ( action === 'promptStream' ) window.runPromptStream( inputText, submitToAIcompleted );
-
+        window.runPromptStreamJsonInput(promptObj, submitToAIcompleted);
       }, 1000);
     }
 
@@ -84,63 +342,58 @@
 
     async function about() {
 
-      const inputText = document.getElementById('inputText').value;
-      const output = document.getElementById('responseOutput');
-      output.textContent = 'Checking...';
+      console.log('submitToAIcompleted', result);
 
-      setTimeout(() => {
-        let result =  '**Gemini Nano** \n\n' +
-                     ' The following list of features are available/enabled on your machine: \n' +
-                     '| Feature | Enabled | Purpose |\n'+
-                     '| --- | --- | --- |\n' +
-                    //  '| Summarize | ${( 'Summarizer' in self ? '&#10003;' : ' ' )} | Summarizing narratives, articles or messages |\n' +
-                     '| Summarize | ' + ( 'Summarizer' in self ? '&#10003;' : ' ' ) + ' | Summarizing narratives, articles or messages|\n' +
-                     '| Translate (en - fr) | ' + ( 'Translator' in self ? '&#10003;' : ' ' ) + ' | Translation of texts into other langages (en-fr defaulted) |\n' +
-                     '| Rewrite | ' + ( 'Rewriter' in self ? '&#10003;' : ' ' ) + ' | Rewrite texts to sound more polite or formal |\n' +
-                    //  '| Prompt | ${( 'prompt' in self ? '&#10003;' : ' ' )} |\n' +
-                     '| Prompt | ' + ( 'prompt' in self ? '&#10003;' : ' ' ) + ' | Answer questions based on provided texts or general Q&A|\n\n' +
-                     '**Getting Started** \n\n' + 
-                     'Gemini (Nano) is an experimental AI feature (under Chrome)\n' + 
-                     'How to Enable Foundational Model (e.g. v2Nano) \n' + 
-                     '1. Copy reserved URL _chrome://flags/#prompt-api-for-gemini-nano_ and paste into new tab \n' + 
-                     '2. Enable feature and restart chrome \n\n' +
-                     'Note: Individual features may require separate settings to be enabled ([rewriter](chrome://flags/#rewriter-api-for-gemini-nano));' + 
-                     'visit developer site to [Learn more](https://developer.chrome.com/docs/ai/get-started) \n\n' +
-                     '**Operating system**\n\nWindows 10 or 11; macOS 13+ (Ventura and onwards); or Linux. Chrome for Android, iOS, and ChromeOS are not yet supported by the APIs which use Gemini Nano.  \n' +
-                     '**Storage**\n\nAt least 22 GB of free space on the volume that contains your Chrome profile  \n';
+      if (timedResponses) result['started'] = lastRequest;
+      if (timedResponses) result['completed'] = Date.now();
 
-        output.innerHTML = window.markdownReturn( result );
-      }, 100);
-    }
+      const inputPrompt = document.getElementById('promptInstructions').getElementsByTagName('textarea')[0].value || '';
+      const promptText = 'Summarize the following sentence/input into no more than 8 words: ' + inputPrompt;
 
-    async function submitToAIcompleted( result ) {
+      // document
+      //   .querySelectorAll("mermaid-chart")
+      //   .forEach(el => {
 
-      console.log( 'submitToAIcompleted', result );
+      //       const div = document.createElement("div");
 
-      if ( timedResponses ) result[ 'started' ] = lastRequest;
-      if ( timedResponses ) result[ 'completed' ] = Date.now();
+      //       div.className = "mermaid";
+      //       div.textContent = el.textContent;
 
-      addToTabList( result );
+      //       el.replaceWith(div);
+
+      // });
+
+      // mermaid.initialize({ startOnLoad: true });
+      // console.log('mermaid initialized', mermaid);
+      // await mermaid.run();
+
+      // idea: create summarizer string for "history"
+      // window.runPromptGet(promptText, (newTitle) => {
+      //   result.title = newTitle || result.title;
+      //   addToHistoryList(result);
+      //   createActionButtonsForHistoryItemPreview(appPrefix + ':history:' + result.id, result);
+      // });
 
     }
 
-    async function addToTabList( result ) {
-        
-      const localID = appPrefix + result.id;
-      const targ = document.getElementById('tabList');
-      const tab = document.createElement('div');
+    function addToHistoryList(result) {
 
-      localStorage.setItem( localID, JSON.stringify( result ) );
+      const localID = appPrefix + ':history:' + result.id;
+      const targ = document.getElementById('history');
+      const tab = document.createElement('p');
 
-      tab.className = 'floatButton floatTab';
-      tab.setAttribute( 'id', localID );
-      tab.setAttribute( 'title', result.input );
-      tab.innerText = result.input;
+      localStorage.setItem(localID, JSON.stringify(result));
+
+      tab.className = 'btnTabHistory w-54 truncate bg-white border rounded-lg p-2 shadow-sm overflow-hidden max-h-10 content-center';
+      tab.setAttribute('id', localID);
+      tab.setAttribute('title', result.title);
+      tab.innerText = result.title.substring(0, 30) + (result.title.length > 30 ? '...' : '');
 
       targ.appendChild(tab);
 
       tab.addEventListener('click', function() {
-        readTab( result.id );
+        readTab(result.id);
+        document.getElementsByClassName('tabOutput')[0].click();
         const output = document.getElementById('responseOutput');
         output.innerHTML = "<div class='floatInput'>" + result.input + "</div><br>" + window.markdownReturn( "\n" +  result.response );
         createActionButtonsForTab( result.id );
@@ -148,124 +401,126 @@
 
     }
 
-    async function clipboardCopy( id ) {
+    async function clipboardCopy(result) {
 
-      const result = await readTab( appPrefix + id );
-
-      if ( !result ) {
-        console.error( 'No result found for ID:', id );
+      if (!result) {
+        console.error('No match found');
         return;
       }
 
-      const textToCopy = `Input: ${result.input}\nResponse: ${result.response}`;
-
-      if ( navigator.clipboard ) {
-        try{ 
-
-            navigator.clipboard.writeText(textToCopy)
-              .then(() => {
-                console.log('Text copied to clipboard');
-              })
-              .catch(err => {
-                console.error('Failed to copy text: ', err);
-              });
+      if (navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(result.response);
+          console.log('Text copied to clipboard');
         } catch (err) {
           console.error('Failed to copy text: ', err);
         }
       } else {
-        console.error('Clipboard not available' );
+        console.error('Clipboard not available');
       }
 
     }
 
-    async function createActionButtonsForTab( id ) {
+    function createActionButtonsForHistoryItemPreview(id, result) {
 
-      console.log( 'createActionButtonsForTab', id );
+      console.log('createActionButtonsForHistoryItemPreview', id);
 
       const targ = document.getElementById('responseOutput');
+      const buttonRow = document.createElement('div');
+      buttonRow.className = 'px-4 py-2 flex flex-row gap-4';
 
-      // delete button (remove tab + content + stored entry)
       const clipboardButton = document.createElement('button');
+      clipboardButton.className = 'px-4 py-4 font-semibold flex flex-row text-sm bg-gray-100 mb-4 mt-6 text-stone-800 rounded-2xl shadow-sm w-40 hover:shadow-lg';
+      clipboardButton.innerHTML = '<i data-lucide="copy" class="w-4 h-4 mx-4 text-purple-600"></i>markdown';
+      clipboardButton.onclick = function() { clipboardCopy(result); };
+      buttonRow.appendChild(clipboardButton);
 
-      clipboardButton.className = 'historyButton';
-      clipboardButton.innerText = 'Copy';
-      clipboardButton.onclick = function() {
-        clipboardCopy( id );
-      };
-
-      targ.appendChild(clipboardButton);
-      
-      // delete button (remove tab + content + stored entry)
       const deleteButton = document.createElement('button');
-
-      deleteButton.className = 'historyButton';
+      deleteButton.className = 'px-4 py-2 font-semibold text-sm bg-gray-100 mb-4 mt-6 text-stone-800 rounded-2xl shadow-sm w-40 hover:shadow-lg';
       deleteButton.innerText = 'Delete';
-      deleteButton.onclick = function() {
-        deleteTab( id );
-      };
+      deleteButton.onclick = function() { deleteHistoryItem(id); };
+      buttonRow.appendChild(deleteButton);
 
-      targ.appendChild(deleteButton);
+      targ.appendChild(buttonRow);
+      lucide.createIcons();
 
     }
 
-    async function readAllStoredPrompts() {
+    function readAllStoredPrompts() {
 
-      console.log( 'readAllStoredPrompts' );
+      const arrStoredSearches = [];
 
-      const targ = document.getElementById('tabList');
-
-      var arrStoredSearches = [];
-
-      for ( let i = 0; i < localStorage.length; i++ ) {
-
+      for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if ( key.startsWith( appPrefix ) ) {
-          const result = JSON.parse( localStorage.getItem( key ) );
-          arrStoredSearches.push( result )
+        if (key.startsWith(appPrefix)) {
+          arrStoredSearches.push(JSON.parse(localStorage.getItem(key)));
         }
       }
 
-      arrStoredSearches.sort( (a,b) => a.completed < b.completed ? -1 : 1 );
-
-      for ( let i = 0; i < arrStoredSearches.length; i++ ) {
-
-        addToTabList( arrStoredSearches[ i ] );
-
-      }
-      
-    }
-
-    async function readTab( id ) {
-
-      console.log( 'readTab', id );
-
-      return JSON.parse( localStorage.getItem( id ) );
+      arrStoredSearches.sort((a, b) => a.completed < b.completed ? -1 : 1);
+      arrStoredSearches.forEach(result => addToHistoryList(result));
 
     }
 
-    async function deleteTab( id ) {
+    function readTab(id) {
+      return JSON.parse(localStorage.getItem(id));
+    }
 
-      console.log( 'deleteTab', id );
+    function deleteHistoryItem(id) {
 
-      localStorage.removeItem( appPrefix + id );
-
-      document.getElementById( appPrefix + id ).remove();
+      localStorage.removeItem(id);
+      document.getElementById(id).remove();
 
       const output = document.getElementById('responseOutput');
 
       setTimeout(() => {
-        let result =  '```\ndone\n```';
-        output.innerHTML = window.markdownReturn( result );
+        output.innerHTML = `
+        <div id="notification" class="max-w-sm w-full bg-white shadow-lg rounded-2xl m-4 p-4 flex transition transform translate-y-0 opacity-100">
+          <div class="flex my-auto h-6 w-6">
+            <svg class="h-6 w-6 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <div class="flex m-auto">
+            <p class="text-sm font-medium text-gray-900">Success!</p>
+          </div>
+          <button onclick="document.getElementById('notification').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 flex h-8 w-6 mt-0">✕</button>
+        </div>`;
       }, 200);
 
     }
+
+
+    document.getElementById('submit').onclick = function() {
+      submitToAI();
+    };
+
+    document.getElementById('testURL').onclick = function() {
+
+      const url = document.getElementById('url').value || '';
+      const username = document.getElementById('username').value || '';
+      const password = document.getElementById('password').value || '';
+      const apiSecurity = document.querySelector('input[type="radio"][name="apiSecurity"]:checked').value;
+
+      const args = { url };
+
+      if (url.length) {
+
+        if (apiSecurity === 'token') {
+          const accessToken = document.getElementById('accessToken').value || '';
+          if (accessToken.length) args['accessToken'] = accessToken;
+        } else if (apiSecurity === 'basic') {
+          if (username.length) args['username'] = username;
+          if (password.length) args['password'] = password;
+        }
 
     document.getElementById( 'submit' ).onclick = function() {
         submitToAI();
     };
 
-    document.getElementById( 'about' ).onclick = function() {
-        about();
+    document.getElementById('aboutGemini').onclick = function() {
+      window.aboutGemini();
+      document.getElementsByClassName('tabOutput')[0].click();
     };
 
     document.getElementById('actionSelect').onchange = function(e,v) {
@@ -281,11 +536,26 @@
     //     window.stopGemini();
     // };
 
-    readAllStoredPrompts()
+    readAllStoredPrompts();
 
     setTimeout(() => {
-      about();
-    }, 500);
+
+      const select = document.getElementById('character');
+
+      window.promptCharacters.forEach((char, i) => {
+        const option = document.createElement('option');
+        option.value = char.id;
+        option.textContent = char.name + ' (' + char.style + ')';
+        select.appendChild(option);
+        if (i === 0) option.selected = true;
+        idxCharacters[char.id] = char;
+      });
+
+      select.onchange = function() {
+        window.destroyLanguageModel();
+      };
+
+    }, 1000);
 
 </script>
 

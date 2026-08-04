@@ -1,149 +1,234 @@
-  import { GeminiSummarizer } from './geminiSummarizer.js';
-  import { GeminiTranslator } from './geminiTranslator.js';
-  import { GeminiRewriter } from './geminiRewriter.js';
-  import { GeminiPrompt } from './geminiPrompt.js';
+import { GeminiPrompt } from './geminiPrompt.js';
+import MarkdownIt from 'https://esm.run/markdown-it'; // Fixed import syntax
 
-  import * as markdownIt from 'https://esm.run/markdown-it';
+// Initialize markdown-it once globally to avoid recreating the instance on every call
+const md = new MarkdownIt();
 
-  // const controller = new AbortController(); // for aborting gemini tasks (BUGGY: FIX ME)
+// Hardcoded configurations
+const RESPONSE_OUTPUT_CONTROL_ID = 'responseOutput';
+const promptLanguageModel = new GeminiPrompt(markdownOutput);
 
-  // const stopControllerButtonID = 'stop'; //document.getElementById('');
-  const responseOutputControlID = 'responseOutput';
+// move this outside here, we can manage "support" for different integrations elsewhere
+const SCRIPT_SUPPORTED_EMBEDDINGS = [
+  { 
+    name: 'mermaid',
+    open: '```mermaid',
+    close: '```',
+    replace: { open: ' <pre class="mermaid">', close: '</pre>' },
+    handler: preprocessMermaid
+  }
+];
+function preprocessMermaidOLD(md) {
 
-  const summarizerInstance = new GeminiSummarizer( markdownOutput );
-  const translatorInstance = new GeminiTranslator( markdownOutput );
-  const rewriterInstance = new GeminiRewriter( markdownOutput );
-  const promptLanguageModel = new GeminiPrompt( markdownOutput );
+  return md.replace(
+    /```mermaid\s*([\s\S]*?)```/g,
+    (match, mermaidCode) => {
 
+      return `
+        <div class="mermaid">
+        ${mermaidCode.trim()}
+        </div>
+      `;
+    }
+  );
+
+}
+
+function preprocessMermaid(md) {
+
+  return md.replace(
+    /```mermaid\s*([\s\S]*?)```/g,
+    (match, mermaidCode) => {
+
+      return `
+        <mermaid-chart>
+        ${mermaidCode.trim()}
+        </mermaid-chart>
+      `;
+    }
+  );
+
+}
+
+function preprocessSupportedScriptEmbeddings(chunk) {
+
+   // 1. if match found in SCRIPT_SUPPORTED_EMBEDDINGS (for open property) , create necessary CDN links (detect if already created)
+   // 2. swap SCRIPT_SUPPORTED_EMBEDDINGS replace 'open' + 'close' content
+   console.log( 'streamFinal', chunk);
+   var newChunk = chunk, cdnLink = '';
+
+   SCRIPT_SUPPORTED_EMBEDDINGS.forEach(embedding => {
+     if (newChunk.includes(embedding.open) && newChunk.includes(embedding.close)) {
+       if ( embedding.name === 'mermaid' ) {
+         newChunk = embedding.handler(newChunk);
+       }
+     }
+   });
+
+   return newChunk;
+}
+
+// function preprocessSupportedScriptEmbeddings(chunk) { 
+
+//    // 1. if match found in SCRIPT_SUPPORTED_EMBEDDINGS (for open property) , create necessary CDN links (detect if already created)
+//       // 2. swap SCRIPT_SUPPORTED_EMBEDDINGS replace 'open' + 'close' content
+//       console.log( 'streamFinal', chunk);
+//       var newChunk = chunk, cdnLink = '';
+
+//       SCRIPT_SUPPORTED_EMBEDDINGS.forEach(embedding => {
+//         if (newChunk.includes(embedding.open) && newChunk.includes(embedding.close)) {
+//           const { open, close } = embedding.replace;
+//           newChunk = newChunk.replace(embedding.open, open).replace(embedding.close, close);
+
+//     return md.replace(
+//         /```mermaid\s*([\s\S]*?)```/g,
+//         (match, mermaidCode) => {
+
+//                   return `
+//       <div class="mermaid">
+//       ${mermaidCode.trim()}
+//       </div>
+//       `;
+//               }
+//           );
+          
+//         }
+//       });
+
+//       return newChunk; // + cdnLink;
+// }
+
+/**
+ * Renders markdown chunk to the output container and handles auto-scrolling
+ */
+function markdownOutput(chunk) {
+
+  const html = md.render((chunk)); //preprocessSupportedScriptEmbeddings
+  const targetEl = document.getElementById(RESPONSE_OUTPUT_CONTROL_ID);
+
+  if (!targetEl) {
+    console.error(`Element with ID "${RESPONSE_OUTPUT_CONTROL_ID}" not found.`);
+    return;
+  }
+
+  targetEl.innerHTML = html;
+  targetEl.scrollTop = targetEl.scrollHeight;
+
+  // DHIS2 iframe context smooth scrolling
+  const parentDocument = window.parent?.document;
+  const parentFrame = parentDocument?.querySelector('.app-shell-app');
+  if (parentFrame) {
+    parentFrame.scrollTo({ top: parentFrame.scrollHeight, left: 0, behavior: 'smooth' });
+  }
+}
+
+/**
+ * Returns rendered HTML from a markdown string
+ */
+function markdownReturn(chunk) {
+  return md.render(chunk);
+}
+
+/**
+ * Standard Prompt Execution
+ */
+async function runPrompt(inpText, callback) {
+  try {
+    await promptLanguageModel.init();
+    await promptLanguageModel.prompt(inpText, (summary) => {
+      markdownOutput(summary);
+      if (typeof callback === 'function') {
+        callback({ id: generateRandomId(15), type: 'P', input: inpText, response: summary });
+      }
+    });
+  } catch (error) {
+    console.error('Error running prompt:', error);
+  }
+}
+
+/**
+ * Streamed Prompt Execution
+ */
+async function runPromptStream(input, callback) {
+  try {
+    // Fixed: Handled cases where input might be passed as an object containing options
+    const text = typeof input === 'object' ? input.prompt : input;
+    const options = typeof input === 'object' ? input.options : undefined;
+
+    await promptLanguageModel.init(options);
+    await promptLanguageModel.promptStream(text, markdownOutput, (streamFinal) => {
+      if (typeof callback === 'function') {
+        callback({ id: generateRandomId(15), type: 'Ps', input: text, response: streamFinal });
+      }
+    });
+  } catch (error) {
+    console.error('Error running prompt stream:', error);
+  }
+}
+
+/**
+ * Streamed Prompt Execution with JSON Input
+ */
+async function runPromptStreamJsonInput(inpObj, callback) {
+  try {
+    if (typeof inpObj === 'object' && inpObj?.defaultPrompt) {
+      promptLanguageModel.defaults.systemPrompt = inpObj.defaultPrompt;
+    }
+
+    await promptLanguageModel.init(inpObj?.options);
+    await promptLanguageModel.promptStream(inpObj.prompt, markdownOutput, (streamFinal) => {
+      if (typeof callback === 'function') {
+        // Replaced expensive JSON stringify/parse with modern spread operator
+        const responseData = {
+          ...inpObj,
+          id: generateRandomId(15),
+          type: 'Ps',
+          response: streamFinal
+        };
+        callback(responseData);
+      }
+    });
+  } catch (error) {
+    console.error('Error running JSON prompt stream:', error);
+  }
+}
+
+/**
+ * Generic API Fetch Utility
+ */
+async function testAPIurl(args, callback) {
+  console.log('testAPIurl called with args:', args);
   
-  // 1. bind "stop" button to controller (also show/hide accordingly)
-  // 2. include option: use-as-chat (where responses are appended to the chat history)
+  const headers = { 'Content-Type': args?.contentType || 'application/json' };
+  const body = args?.body || null;
 
-  function markdownOutput ( chunk ) {
-
-    const md = markdownit()
-    const html = md.render(chunk);
-    const targetEl = document.getElementById( responseOutputControlID );
-
-    if (!targetEl) {
-        console.error(`Element with ID "${targetElementId}" not found.`);
-        return;
-    }
-
-    targetEl.innerHTML = html;
-    targetEl.scrollTop = targetEl.scrollHeight;
+  if (args?.username && args?.password) {
+    headers['Authorization'] = `Basic ${btoa(`${args.username}:${args.password}`)}`;
+  } else if (args?.accessToken) {
+    // Fixed: Bearer token logic previously used username/password by mistake
+    headers['Authorization'] = `Bearer ${args.accessToken}`;
   }
 
-  function markdownReturn ( chunk ) {
-
-    const md = markdownit()
-
-    return md.render(chunk);
-
-  }
-
-
-  // Function to run the summarizer
-  async function runSummarizer ( inpText, callback ) {
-
-    await summarizerInstance.init();
-
-    const summary = await summarizerInstance.summarize( inpText );
-
-    markdownOutput( summary );
-
-    if ( callback && typeof callback === 'function') {
-
-      callback( { id: generateRandomId(15), type: 'S', input: inpText, response: summary } );
-
-    }
-
-  }
-  async function runSummarizerStream ( inpText, callback ) {
-
-    await summarizerInstance.init();
-
-    await summarizerInstance.summarizeStream( inpText, 'intended for health managers', markdownOutput, ( streamFinal ) => {
-
-      if ( callback && typeof callback === 'function') {
-
-        callback( { id: generateRandomId(15), type: 'Ss', input: inpText, response: streamFinal } );
-
-      }
-
+  try {
+    const response = await fetch(args?.url, {
+      method: args?.method || 'GET',
+      headers,
+      body
     });
 
-  }
-
-  // Function to run the translator
-  async function runTranslator ( inpText, callback ) {
-
-    await translatorInstance.init( document.getElementById('languageFrom') ? document.getElementById('languageFrom').value : 'en', document.getElementById('languageTo') ? document.getElementById('languageTo').value : 'fr' );
-
-    const summary = await translatorInstance.translate( inpText );
-
-    markdownOutput( summary );
-
-      if ( callback && typeof callback === 'function') {
-
-        callback( { id: generateRandomId(15), type: 'T', input: inpText, response: summary } );
-
-      }
-
-  }
-
-  // Function to run the rewriter
-  async function runRewriter ( inpText, callback ) {
-
-    await rewriterInstance.init();
-
-    const summary = await rewriterInstance.rewrite( inpText );
-
-    markdownOutput( summary );
-
-    if ( callback && typeof callback === 'function') {
-
-      callback( { id: generateRandomId(15), type: 'R', input: inpText, response: summary } );
-
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Fetch successful:', data);
+      callback(data);
+    } else {
+      console.error('Fetch failed:', response.status, response.statusText);
+      callback({ error: 'Fetch failed', status: response.status, statusText: response.statusText });
     }
-
+  } catch (error) {
+    console.error('Error during fetch:', error);
+    callback({ error: error.message });
   }
-
-  // Function to run the prompt
-  async function runPrompt ( inpText, callback ) {
-
-    await promptLanguageModel.init();
-
-    await promptLanguageModel.prompt( inpText , ( summary ) => {
-
-      markdownOutput( summary );
-
-      if ( callback && typeof callback === 'function') {
-
-        callback( { id: generateRandomId(15), type: 'P', input: inpText, response: summary } );
-
-      }
-
-    });
-
-  }
-  async function runPromptStream ( inpText, callback ) {
-
-    // document.getElementById( stopControllerButtonID ).style.display = 'block';
-
-    await promptLanguageModel.init();
-
-    await promptLanguageModel.promptStream( inpText, markdownOutput, ( streamFinal ) => {
-
-      if ( callback && typeof callback === 'function') {
-
-        callback( { id: generateRandomId(15), type: 'Ps', input: inpText, response: streamFinal } );
-
-      }
-
-    });
-
-  }
+}
 
 
 

@@ -9,6 +9,7 @@ export class GeminiTranslator {
   async init( sourceLang = 'en', targetLang = 'fr' ) {
     if (this.translator) return;
     if( this.onResponse ) this.onResponse(  `creating *translator*` );
+    console.log(`translator init: [${sourceLang || 'en'}] - [${targetLang || 'fr'}]`);
     this.translator = await Translator.create({
         sourceLanguage: sourceLang || 'en',
         targetLanguage: targetLang || 'fr',
@@ -28,16 +29,16 @@ export class GeminiTranslator {
   // Translate text
   async translate(text) {
     if (!this.translator) {
-      if( this.onResponse ) this.onResponse(  `Translator not initialized. Call init() first` );
-      throw new Error("Translator not initialized. Call init() first.");
+      if (this.onResponse) this.onResponse('Translator not initialized. Call init() first');
+      throw new Error('Translator not initialized. Call init() first.');
     }
 
     try {
       const result = await this.translator.translate(text);
-      return result.summary || result;
+      return result;
     } catch (error) {
-      console.error("Translator failed:", error);
-      if( this.onResponse ) this.onResponse(  `Translator failed. ${error.message}` );
+      console.error('Translator failed:', error);
+      if (this.onResponse) this.onResponse(`Translator failed. ${error.message}`);
       throw error;
     }
   }

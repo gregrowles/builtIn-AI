@@ -28,17 +28,17 @@ export class GeminiRewriter {
     console.log("Rewriter initialized.");
   }
 
-  // Summarize text
+  // Rewrite text
   async rewrite(text) {
     if (!this.rewriter) {
-      throw new Error("Rewriter not initialized. Call init() first.");
+      throw new Error('Rewriter not initialized. Call init() first.');
     }
 
     try {
       const result = await this.rewriter.rewrite(text);
-      return result.summary || result;
+      return result?.summary ?? result;
     } catch (error) {
-      console.error("Summarization failed:", error);
+      console.error('Rewrite failed:', error);
       throw error;
     }
   }

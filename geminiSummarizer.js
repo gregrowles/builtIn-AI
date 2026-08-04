@@ -30,28 +30,31 @@ export class GeminiSummarizer {
   }
 
   // Summarize text
-  async summarize(text, callback ) {
+  async summarize(text, callback) {
     if (!this.summarizer) {
-      if( this.onResponse ) this.onResponse(  `Summarizer not initialized. Call init() first.` )
-      throw new Error("Summarizer not initialized. Call init() first.");
+      if (this.onResponse) this.onResponse('Summarizer not initialized. Call init() first.');
+      throw new Error('Summarizer not initialized. Call init() first.');
     }
     this.running = true;
     try {
       const result = await this.summarizer.summarize(text);
-      if (callback && typeof callback === 'function') callback( ( result.summary || result ) );
-      else return  ( result.summary || result );
+      const summary = result?.summary ?? result;
+      if (typeof callback === 'function') callback(summary);
+      else return summary;
     } catch (error) {
-      console.error("Summarization failed:", error);
-      if( this.onResponse ) this.onResponse(  `summarizer.summarize failed. ${error.message}` )
+      console.error('Summarization failed:', error);
+      if (this.onResponse) this.onResponse(`summarizer.summarize failed. ${error.message}`);
       throw error;
+    } finally {
+      this.running = false;
     }
   }
 
-  // Summarize streaming
-  async summarizeStream(text, context, onChunk, callback ) {
+  // Streaming summarization
+  async summarizeStream(text, context, onChunk, callback) {
     if (!this.summarizer) {
-      if( this.onResponse ) this.onResponse(  `summarizer.summarize failed. ${error.message}` )
-      throw new Error("Summarizer not initialized. Call init() first.");
+      if (this.onResponse) this.onResponse('Summarizer not initialized. Call init() first.');
+      throw new Error('Summarizer not initialized. Call init() first.');
     }
 
     let allChunks = '';
@@ -67,13 +70,14 @@ export class GeminiSummarizer {
           onChunk(allChunks);
         }
       }
+      if (typeof callback === 'function') callback(allChunks);
     } catch (error) {
-      console.error("summarizeStream failed:", error);
-      if( this.onResponse ) this.onResponse(  `summarizer.summarizeStreaming failed. ${error.message}` )
+      console.error('summarizeStream failed:', error);
+      if (this.onResponse) this.onResponse(`summarizer.summarizeStreaming failed. ${error.message}`);
       throw error;
+    } finally {
+      this.running = false;
     }
-    if (callback && typeof callback === 'function') callback( allChunks );
-    this.running = false;
   }
 
 }
