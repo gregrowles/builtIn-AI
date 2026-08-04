@@ -196,12 +196,21 @@
       </button>
       </div>
 
-    <form class="space-y-4">
-      <!-- Name -->
-      <div>
-        <!-- <label class="block text-sm font-medium text-gray-700">Name</label> -->
-        <input type="text" placeholder="Name"
-          class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+      <textarea id="inputText" placeholder="What is today's date?"></textarea>
+
+      <div class="inputsRow">
+        <!-- <h2>Model Feature</h2> -->
+        <select id="actionSelect">
+            <!-- <option value="summarize">Summarize</option> -->
+            <option value="summarizeStream" hint="Summarize input text using Gemini-Nano 'summarizer' feature">Summarize (Stream)</option>
+            <option value="translate" hint="AI will translate input text using Gemini-Nano 'translate' feature">Translate (en-fr)</option>
+            <option value="rewrite"  hint="AI will attempt to rewrite input text using default configs for 'rewrite' feature`">Rewrite</option>
+            <!-- <option value="prompt" selected>Prompt</option> -->
+            <option value="promptStream" selected hint="AI will respond to input prompts using Gemini-Nano for 'prompt' feature`">Prompt (Stream)</option>
+        </select>
+        <button id="submit">Submit to AI</button>
+        <div style="font-size: 12px; border: 1px dotted #AAA;padding:2px;margin:auto" id="hint"></div>
+        <!-- <div id="stop" class="floatButton">⏹</div> -->
       </div>
 
       <!-- Group -->
@@ -328,7 +337,10 @@
       }, 1000);
     }
 
-    async function submitToAIcompleted(result) {
+
+/* Moved into geminiApp from index.html  */
+
+    async function about() {
 
       console.log('submitToAIcompleted', result);
 
@@ -383,8 +395,8 @@
         readTab(result.id);
         document.getElementsByClassName('tabOutput')[0].click();
         const output = document.getElementById('responseOutput');
-        output.innerHTML = "<div class='floatInput'>" + window.markdownReturn(result.prompt) + "</div><div class='floatOutput flex flex-col gap-2'>" + window.markdownReturn(result.response) + "<div id='AIresponseButtonRow'></div></div>";
-        createActionButtonsForHistoryItemPreview(localID, result);
+        output.innerHTML = "<div class='floatInput'>" + result.input + "</div><br>" + window.markdownReturn( "\n" +  result.response );
+        createActionButtonsForTab( result.id );
       });
 
     }
@@ -502,23 +514,8 @@
           if (password.length) args['password'] = password;
         }
 
-        const svgs = document.getElementById('testURL').getElementsByTagName('svg');
-        svgs[0].classList.add('hidden');
-        svgs[1].classList.remove('hidden');
-
-        setTimeout(() => {
-          window.testAPIurl(args, (result) => {
-            document.getElementById('pasteInput').getElementsByTagName('textarea')[0].value = JSON.stringify(result, null, 2);
-            document.getElementsByClassName('subtab-btn')[0].click();
-            svgs[0].classList.remove('hidden');
-            svgs[1].classList.add('hidden');
-          });
-        }, 750);
-
-      } else {
-        alert('Please enter a URL to test');
-      }
-
+    document.getElementById( 'submit' ).onclick = function() {
+        submitToAI();
     };
 
     document.getElementById('aboutGemini').onclick = function() {
@@ -526,6 +523,18 @@
       document.getElementsByClassName('tabOutput')[0].click();
     };
 
+    document.getElementById('actionSelect').onchange = function(e,v) {
+      const selectedElement = document.getElementById('actionSelect');
+      const selectedOption = selectedElement.options[ selectedElement.selectedIndex ];
+      console.log( selectedOption.getAttribute( 'hint' ) );
+      // document.getElementById( 'inputText' ).setAttribute( 'placeholder', selectedOption.getAttribute( 'hint' ) );
+      document.getElementById( 'hint' ).innerHTML = selectedOption.getAttribute( 'hint' );
+    }
+
+    // document.getElementById( 'stop' ).onclick = function() {
+    //     // window.controllerForAbort.abort();
+    //     window.stopGemini();
+    // };
 
     readAllStoredPrompts();
 

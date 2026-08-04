@@ -230,63 +230,42 @@ async function testAPIurl(args, callback) {
   }
 }
 
-async function destroyLanguageModel() {
-  if (typeof promptLanguageModel.destroy === 'function') {
-    promptLanguageModel.destroy();
+
+
+
+
+  /*  util functions  */
+
+  function generateRandomId(length = 10) {
+    return Math.random().toString(36).substring(2, length + 2);
   }
-}
 
-/**
- * Outputs information about the current Gemini Environment
- */
-function aboutGemini() {
-  setTimeout(() => {
-    // Replaced messy string concatenation with a clean template literal
-    const isSummarizerAvail = 'Summarizer' in self ? '&#10003;' : ' ';
-    const isTranslatorAvail = 'Translator' in self ? '&#10003;' : ' ';
-    const isRewriterAvail = 'Rewriter' in self ? '&#10003;' : ' ';
-    const isPromptAvail = 'prompt' in self ? '&#10003;' : ' ';
+  // struggling with STOP/abort functionality: disabling for now
+  // async function stopGemini () {
+  //   if ( promptLanguageModel.running ) promptLanguageModel.stop();
+  //   if ( summarizerInstance.running ) summarizerInstance.stop();
+  //   if ( translatorInstance.running ) translatorInstance.stop();  
+  //   if ( rewriterInstance.running ) rewriterInstance.stop();
+  //   // controller.abort( "User aborted the operation." );
+  // }
 
-    const result = `**Gemini Nano**
 
-The following list of features are available/enabled on your machine:
-| Feature | Supported | Purpose |
-| --- | --- | --- |
-| Summarize | ${isSummarizerAvail} | Summarizing narratives, articles or messages |
-| Translate (en - fr) | ${isTranslatorAvail} | Translation of texts into other langages (en-fr defaulted) |
-| Rewrite | ${isRewriterAvail} | Rewrite texts to sound more polite or formal |
-| Prompt | ${isPromptAvail} | Answer questions based on provided texts or general Q&A |
+  // Expose functions to the global scope
 
-**Getting Started**
+  window.runSummarizer = runSummarizer;
+  window.runSummarizerStream = runSummarizerStream;   
+  window.runTranslator = runTranslator;
+  window.runRewriter = runRewriter;
+  window.runPrompt = runPrompt;
+  window.runPromptStream = runPromptStream;
+  window.markdownReturn = markdownReturn;
+  window.markdownOutput = markdownOutput;
+  // window.controllerForAbort = controller;
+  // window.stopGemini = stopGemini;
 
-Gemini (Nano) is an experimental AI feature (under Chrome).
-How to Enable Foundational Model (e.g. v2Nano):
-1. Copy reserved URL _chrome://flags/#prompt-api-for-gemini-nano_ and paste into new tab 
-2. Enable feature and restart chrome 
-
-Note: Individual features may require separate settings to be enabled ([rewriter](chrome://flags/#rewriter-api-for-gemini-nano)); visit developer site to [Learn more](https://developer.chrome.com/docs/ai/get-started).
-
-**Operating system**
-Windows 10 or 11; macOS 13+ (Ventura and onwards); or Linux. Chrome for Android, iOS, and ChromeOS are not yet supported by the APIs which use Gemini Nano.
-
-**Storage**
-At least 22 GB of free space on the volume that contains your Chrome profile.`;
-
-    markdownOutput(result);
-  }, 100);
-}
-
-function generateRandomId(length = 10) {
-  return Math.random().toString(36).substring(2, length + 2);
-}
-
-// Expose functions to the global scope
-window.promptCharacters = promptLanguageModel.characters;
-window.runPrompt = runPrompt;
-window.runPromptStream = runPromptStream;
-window.runPromptStreamJsonInput = runPromptStreamJsonInput;
-window.destroyLanguageModel = destroyLanguageModel;
-window.testAPIurl = testAPIurl;
-window.markdownReturn = markdownReturn;
-window.markdownOutput = markdownOutput;
-window.aboutGemini = aboutGemini;
+  // window.about = about;
+  // window.submitToAIcompleted = submitToAIcompleted;
+  // window.about = about;
+  // window.about = about;
+  // window.about = about;
+  
