@@ -1,224 +1,170 @@
-/**
- * GeminiPrompt
- * - Initializes a local LanguageModel once (idempotent)
- * - Supports single-shot prompt() and streaming promptStream()
- * - Emits progress via optional onResponse callback
- * - Provides stop() to cancel active streaming
- */ 
 export class GeminiPrompt {
-  /**
-   * @param {(message: string) => void} [onResponse]
-   */
+  // Store the list of characters statically to prevent memory bloat on instantiation
+  static get CHARACTERS() {
+    return [
+      {
+        id: "public_health_manager",
+        name: "Public Health Manager",
+        style: "Pragmatic, action-oriented, focused on implementation",
+        approach: "Highlights resource allocation, workforce capacity, operational challenges, and feasible interventions",
+        tone: "Clear, managerial, with recommendations suitable for health departments."
+      },
+      {
+        id: "politician",
+        name: "Politician / Policy Maker",
+        style: "Strategic, persuasive, people-focused",
+        approach: "Frames information for public trust, political feasibility, and stakeholder interests",
+        tone: "Accessible, motivational, sometimes high-level rather than technical."
+      },
+      {
+        id: "epidemiologist",
+        name: "Epidemiologist",
+        style: "Analytical, evidence-driven, methodical",
+        approach: "Focuses on patterns, transmission dynamics, risk factors, and causal inference",
+        tone: "Technical but structured, emphasizing methodology and validity."
+      },
+      {
+        id: "statistician",
+        name: "Statistician",
+        style: "Precise, cautious, detail-oriented",
+        approach: "Explains uncertainty, assumptions, confidence intervals, and robustness of findings",
+        tone: "Neutral, focused on rigor and limitations of data."
+      },
+      {
+        id: "research_scientist",
+        name: "Research Scientist",
+        style: "Curious, exploratory, academic",
+        approach: "Connects findings to theories, literature, and future studies",
+        tone: "In-depth, hypothesis-driven, often includes reference-like framing."
+      },
+      {
+        id: "news_desk",
+        name: "News Desk Analyst",
+        style: "Fast, digestible, narrative-driven",
+        approach: "Converts data into headlines, stories, and simplified comparisons",
+        tone: "Clear, engaging, avoids jargon, but may sacrifice nuance."
+      },
+      {
+        id: "community_advocate",
+        name: "Community Advocate",
+        style: "Empathetic, grassroots-oriented",
+        approach: "Frames data in terms of lived experiences, equity, and local impact",
+        tone: "Inclusive, people-centered, calls for fairness and accessibility."
+      },
+      {
+        id: "health_economist",
+        name: "Health Economist",
+        style: "Value-focused, comparative, budget-conscious",
+        approach: "Links interventions to cost-effectiveness, ROI, and trade-offs",
+        tone: "Rational, structured, with an emphasis on efficiency."
+      },
+      {
+        id: "risk_communicator",
+        name: "Risk Communicator",
+        style: "Simplifier, transparent, public-facing",
+        approach: "Explains uncertainty, risks, and probabilities in ways ordinary people can understand",
+        tone: "Calm, relatable, reassuring but honest."
+      },
+      {
+        id: "systems_thinker",
+        name: "Systems Thinker",
+        style: "Holistic, big-picture, interconnected",
+        approach: "Examines interactions across health, economy, society, and environment",
+        tone: "Strategic, conceptual, emphasizes complexity and ripple effects."
+      }
+    ];
+  }
+
   constructor(onResponse) {
-    /** @type {any|null} */
     this.promptLanguageModel = null;
-
-    /** @type {(msg: string) => void | null} */
     this.onResponse = onResponse || null;
-
-    /** @type {boolean} */
+    this.controller = null; // Instantiated per streaming session
     this.running = false;
-
-    /** @type {AbortController | null} */
-    this._streamController = null;
-
-    /** @type {Promise<void> | null} */
-    this._initPromise = null;
-
-    /** @type {string} */
-    this._systemPrompt =
-      'You are a Public Health Manager; your style is Pragmatic, action-oriented, focused on implementation; your approach: Highlights resource allocation, workforce capacity, operational challenges, and feasible interventions; your tone: Clear, managerial, with recommendations suitable for health departments.';
-
-    /** @type {Array<object>} */
-    this.characters = [
-      {
-        id: 'public_health_manager',
-        name: 'Public Health Manager',
-        style: 'Pragmatic, action-oriented, focused on implementation',
-        approach:
-          'Highlights resource allocation, workforce capacity, operational challenges, and feasible interventions',
-        tone: 'Clear, managerial, with recommendations suitable for health departments.',
-      },
-      {
-        id: 'politician',
-        name: 'Politician / Policy Maker',
-        style: 'Strategic, persuasive, people-focused',
-        approach:
-          'Frames information for public trust, political feasibility, and stakeholder interests',
-        tone: 'Accessible, motivational, sometimes high-level rather than technical.',
-      },
-      {
-        id: 'epidemiologist',
-        name: 'Epidemiologist',
-        style: 'Analytical, evidence-driven, methodical',
-        approach:
-          'Focuses on patterns, transmission dynamics, risk factors, and causal inference',
-        tone: 'Technical but structured, emphasizing methodology and validity.',
-      },
-      {
-        id: 'statistician',
-        name: 'Statistician',
-        style: 'Precise, cautious, detail-oriented',
-        approach:
-          'Explains uncertainty, assumptions, confidence intervals, and robustness of findings',
-        tone: 'Neutral, focused on rigor and limitations of data.',
-      },
-      {
-        id: 'research_scientist',
-        name: 'Research Scientist',
-        style: 'Curious, exploratory, academic',
-        approach: 'Connects findings to theories, literature, and future studies',
-        tone: 'In-depth, hypothesis-driven, often includes reference-like framing.',
-      },
-      {
-        id: 'news_desk',
-        name: 'News Desk Analyst',
-        style: 'Fast, digestible, narrative-driven',
-        approach: 'Converts data into headlines, stories, and simplified comparisons',
-        tone: 'Clear, engaging, avoids jargon, but may sacrifice nuance.',
-      },
-      {
-        id: 'community_advocate',
-        name: 'Community Advocate',
-        style: 'Empathetic, grassroots-oriented',
-        approach: 'Frames data in terms of lived experiences, equity, and local impact',
-        tone: 'Inclusive, people-centered, calls for fairness and accessibility.',
-      },
-      {
-        id: 'health_economist',
-        name: 'Health Economist',
-        style: 'Value-focused, comparative, budget-conscious',
-        approach:
-          'Links interventions to cost-effectiveness, ROI, and trade-offs',
-        tone: 'Rational, structured, with an emphasis on efficiency.',
-      },
-      {
-        id: 'risk_communicator',
-        name: 'Risk Communicator',
-        style: 'Simplifier, transparent, public-facing',
-        approach:
-          'Explains uncertainty, risks, and probabilities in ways ordinary people can understand',
-        tone: 'Calm, relatable, reassuring but honest.',
-      },
-      {
-        id: 'systems_thinker',
-        name: 'Systems Thinker',
-        style: 'Holistic, big-picture, interconnected',
-        approach:
-          'Examines interactions across health, economy, society, and environment',
-        tone:
-          'Strategic, conceptual, emphasizes complexity and ripple effects.',
-      },
+    this.AILanguageModelSamplingMode = [
+      "most-predictable", // For strict consistency/factual extraction
+      "predictable",      // For highly focused outputs
+      "balanced",         // The default state for standard prompting
+      "creative",         // For tasks favoring variety over strict facts
+      "most-creative"     // For maximum token diversity and brainstorming
     ];
 
-    this.modelParameters = null;
+    // Default to the first character ('public_health_manager')
+    const defaultChar = GeminiPrompt.CHARACTERS[0];
+    this.defaults = {
+      systemPrompt: `You are a ${defaultChar.name}; your style is ${defaultChar.style}; your approach: ${defaultChar.approach}; your tone: ${defaultChar.tone}`
+    };
   }
 
-  /** Internal: emit UI updates safely */
-  _emit(msg) {
-    if (this.onResponse) this.onResponse(String(msg));
+  // Allow global window context to access characters seamlessly
+  get characters() {
+    return GeminiPrompt.CHARACTERS;
   }
 
-  /** Set the system prompt. */
-  setSystemPrompt(systemPrompt) {
-    if (typeof systemPrompt !== 'string' || !systemPrompt.trim()) return;
-    this._systemPrompt = systemPrompt.trim();
-  }
-
-  /** Convenience: set system prompt to a predefined character by id. */
-  useCharacter(characterId) {
-    const c = this.characters.find((ch) => ch.id === characterId);
-    if (!c) return false;
-    this.setSystemPrompt(
-      `You are a ${c.name}; your style is ${c.style}; your approach: ${c.approach}; your tone: ${c.tone}`
-    );
-    return true;
-  }
-
-  /** Initialize the model once (idempotent and concurrency-safe). */
-  async init() {
+  /**
+   * Initializes the LanguageModel (should be called once)
+   */
+  async init(opts = {}) {
     if (this.promptLanguageModel) return;
 
-    if (!this._initPromise) {
-      this._emit(
-        `creating promptLanguageModel*\n\ndefault context prompt: _${this._systemPrompt}_`
-      );
+    this.log(`creating promptLanguageModel*\n\ndefault context prompt: _${this.defaults.systemPrompt}_`);
 
-      this._initPromise = (async () => {
-        try {
-          // If the API supports AbortSignal for create, wire it here.
-          const controller = new AbortController();
-          const options = {
-            signal: controller.signal,
-            // temperature: Math.max(params.defaultTemperature * 1.2, 2.0),
-            // topK: params.defaultTopK,
-            // model: 'gemini-1.5-flash', // optional: uncomment if explicit model selection is desired
-            initialPrompts: [{ role: 'system', content: this._systemPrompt }],
-          };
+    // Clean initial Prompts format: content expects a string, not the defaults object
+    const defaults = {
+      initialPrompts: [{ role: 'system', content: this.defaults.systemPrompt }],
+      samplingMode: this.AILanguageModelSamplingMode[0]
+    };
 
-          // LanguageModel is provided by the browser (Chrome built-in AI).
-          // eslint-disable-next-line no-undef
-          this.promptLanguageModel = await LanguageModel.create(options);
-          const params = await LanguageModel.params();
-          this.modelParameters = params;
-          console.log('params', params);
-          this._emit('LanguageModel initialized.\nThinking...');
-          // ...existing code...
-          // ...existing code...
-        } catch (e) {
-          console.error('Error loading LanguageModel:', e);
-          this._emit('LanguageModel failed: ' + e.message);
-          this.promptLanguageModel = null;
-          throw e;
-        }
-      })();
-    }
+    const options = { ...defaults, ...opts };
 
-    return this._initPromise;
-  }
-
-  /** Destroy and cleanup resources. */
-  async destroy() {
     try {
-      if (this._streamController) {
-        this._streamController.abort();
-      }
-      if (this.promptLanguageModel?.destroy) {
-        await this.promptLanguageModel.destroy();
-      }
-    } catch (e) {
-      console.warn('LanguageModel destroy warning:', e);
-    } finally {
-      this.promptLanguageModel = null;
-      this._initPromise = null;
-      this.running = false;
-      this._streamController = null;
+      this.promptLanguageModel = await LanguageModel.create(options);
+      this.log("LanguageModel initialized.\nThinking...");
+      console.log("LanguageModel initialized.");
+    } catch (error) {
+      console.error("Error loading LanguageModel:", error);
+      this.log(`LanguageModel failed: ${error.message}`);
     }
   }
 
   /**
-   * Single-shot prompt.
-   * @param {string} promptInput
-   * @param {(summary: string) => void} [callback]
+   * Destroys current model instance
+   */
+  async destroy() {
+    if (this.promptLanguageModel) {
+      await this.promptLanguageModel.destroy();
+    }
+    this.promptLanguageModel = null;
+    this.running = false;
+  }
+
+  /**
+   * Executes a non-streamed prompt
    */
   async prompt(promptInput, callback) {
-    if (!this.promptLanguageModel) {
-      this._emit('[ ] promptLanguageModel not initialized. Call init() first.');
-      throw new Error('promptLanguageModel not initialized. Call init() first.');
-    }
+    this.ensureInitialized();
 
-    const input = String(promptInput ?? '').trim();
-    if (!input) throw new Error('prompt input is empty');
-
-    this.running = true;
     try {
-      const result = await this.promptLanguageModel.prompt(input);
-      const summary = result?.summary ?? result ?? '';
-      if (typeof callback === 'function') callback(summary);
-      return summary;
+      this.running = true;
+      this.controller = new AbortController();
+
+      // Pass the signal down so the prompt can be aborted if needed
+      const result = await this.promptLanguageModel.prompt(promptInput, {
+        signal: this.controller.signal
+      });
+
+      const responseText = result.summary || result;
+
+      if (typeof callback === 'function') {
+        callback(responseText);
+      }
+      return responseText;
     } catch (error) {
-      console.error('LanguageModel (prompt) failed:', error);
-      this._emit('promptLanguageModel (prompt) failed: ' + error.message);
+      if (error.name === 'AbortError') {
+        this.log("Prompt cancelled by user.");
+      } else {
+        console.error("LanguageModel (prompt) failed:", error);
+        this.log(`promptLanguageModel (prompt) failed: ${error.message}`);
+      }
       throw error;
     } finally {
       this.running = false;
@@ -226,68 +172,80 @@ export class GeminiPrompt {
   }
 
   /**
-   * Streaming prompt.
-   * @param {string} promptInput
-   * @param {(partial: string) => void} onChunk
-   * @param {(finalText: string) => void} [callback]
+   * Executes a streamed prompt, allowing chunks to render incrementally
    */
   async promptStream(promptInput, onChunk, callback) {
-    if (!this.promptLanguageModel) {
-      this._emit('promptLanguageModel not initialized. Call init() first.');
-      throw new Error('promptLanguageModel not initialized. Call init() first.');
-    }
-    if (typeof onChunk !== 'function') {
-      throw new Error('onChunk callback is required for streaming.');
-    }
+    this.ensureInitialized();
 
-    const input = String(promptInput ?? '').trim();
-    if (!input) throw new Error('prompt input is empty');
-
-    this.running = true;
-    this._streamController = new AbortController();
-    let all = '';
-
+    let allChunks = '';
     try {
-      // If API supports options with signal for streaming, pass it through. Otherwise, omit.
-      const stream = await this.promptLanguageModel.promptStreaming(input /*, { signal: this._streamController.signal }*/);
+      this.running = true;
+      this.controller = new AbortController();
+
+      // Pass the abort signal into the stream generator
+      const stream = await this.promptLanguageModel.promptStreaming(promptInput, {
+        signal: this.controller.signal
+      });
 
       for await (const chunk of stream) {
-        all += String(chunk ?? '');
-        onChunk(all);
-        if (this._streamController.signal.aborted) break;
+        allChunks += chunk;
+        if (typeof onChunk === 'function') {
+          onChunk(allChunks);
+        }
       }
 
-      if (typeof callback === 'function') callback(all);
-      return all;
-    } catch (error) {
-      if (this._streamController?.signal?.aborted) {
-        this._emit('Prompt stream aborted.');
-        return all;
+      if (typeof callback === 'function') {
+        callback(allChunks);
       }
-      console.error('promptStream failed:', error);
-      this._emit('promptLanguageModel (promptStream) failed: ' + error.message);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        this.log("Prompt stream stopped.");
+      } else {
+        console.error("promptStream failed:", error);
+        this.log(`promptLanguageModel (promptStream) failed: ${error.message}`);
+      }
       throw error;
     } finally {
       this.running = false;
-      this._streamController = null;
-      // Guard: usage counters may not exist depending on API/version
-      try {
-        const usage = `${this.promptLanguageModel?.inputUsage ?? 0}/${this.promptLanguageModel?.inputQuota ?? 0}`;
-        console.log(usage);
-      } catch {
-        /* no-op */
-      }
+      this.logUsage();
     }
   }
 
-  /** Stop current streaming (if any). */
+  /**
+   * Aborts any running prompt request
+   */
   async stop() {
-    if (this._streamController && !this._streamController.signal.aborted) {
-      this._streamController.abort();
+    if (this.controller && this.running) {
+      console.log("Stopping prompt execution...");
+      this.controller.abort();
       this.running = false;
-      this._emit('Prompt stream stopped.');
     } else {
-      console.warn('No active stream to stop.');
+      console.warn("No active stream to stop.");
+    }
+  }
+
+  // Helper: Enforce instance safety checks
+  ensureInitialized() {
+    if (!this.promptLanguageModel) {
+      const errMsg = "promptLanguageModel not initialized. Call init() first.";
+      this.log(`[ ] ${errMsg}`);
+      throw new Error(errMsg);
+    }
+  }
+
+  // Helper: Safe callback-based UI logging
+  log(message) {
+    if (typeof this.onResponse === 'function') {
+      this.onResponse(message);
+    }
+  }
+
+  // Helper: Log usage status safely without breaking when fields are undefined
+  logUsage() {
+    const usage = this.promptLanguageModel?.contextUsage;
+    const quota = this.promptLanguageModel?.contextWindow;
+    if (usage !== undefined && quota !== undefined) {
+      console.log(`${usage}/${quota}`);
     }
   }
 }

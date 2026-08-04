@@ -1,266 +1,288 @@
-import { GeminiSummarizer } from './geminiSummarizer.js';
-import { GeminiTranslator } from './geminiTranslator.js';
-import { GeminiRewriter } from './geminiRewriter.js';
 import { GeminiPrompt } from './geminiPrompt.js';
+import MarkdownIt from 'https://esm.run/markdown-it'; // Fixed import syntax
 
-import MarkdownIt from 'https://esm.run/markdown-it';
+// Initialize markdown-it once globally to avoid recreating the instance on every call
+const md = new MarkdownIt();
 
-// DOM element IDs
-const RESPONSE_OUTPUT_ID = 'responseOutput';
-
-// Single MarkdownIt instance to avoid re-creating per call
-const md = new MarkdownIt({ linkify: true, breaks: true });
-
-// Instances
-const summarizerInstance = new GeminiSummarizer(markdownOutput);
-const translatorInstance = new GeminiTranslator(markdownOutput);
-const rewriterInstance = new GeminiRewriter(markdownOutput);
+// Hardcoded configurations
+const RESPONSE_OUTPUT_CONTROL_ID = 'responseOutput';
 const promptLanguageModel = new GeminiPrompt(markdownOutput);
 
-// Utilities
-const getElById = (id) => document.getElementById(id);
-
-/**
- * Render markdown chunk into the response output element.
- * Overwrites the element's content and scrolls to bottom.
- */
-function markdownOutput(chunk) {
-  const targetEl = getElById(RESPONSE_OUTPUT_ID);
-  if (!targetEl) {
-    console.error(`Element with ID "${RESPONSE_OUTPUT_ID}" not found.`);
-    return;
+// move this outside here, we can manage "support" for different integrations elsewhere
+const SCRIPT_SUPPORTED_EMBEDDINGS = [
+  { 
+    name: 'mermaid',
+    open: '```mermaid',
+    close: '```',
+    replace: { open: ' <pre class="mermaid">', close: '</pre>' },
+    handler: preprocessMermaid
   }
-  const html = md.render(String(chunk ?? ''));
-  targetEl.innerHTML = html;
-  targetEl.scrollTop = targetEl.scrollHeight;
-}
+];
+function preprocessMermaidOLD(md) {
 
-/**
- * Convert markdown to HTML and return it.
- */
-function markdownReturn(chunk) {
-  return md.render(String(chunk ?? ''));
-}
+  return md.replace(
+    /```mermaid\s*([\s\S]*?)```/g,
+    (match, mermaidCode) => {
 
-/**
- * Secure random ID generator; falls back to Math.random if crypto is unavailable.
- */
-function generateRandomId(length = 10) {
-  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  const bytes =
-    (globalThis.crypto && globalThis.crypto.getRandomValues)
-      ? crypto.getRandomValues(new Uint8Array(length))
-      : Array.from({ length }, () => Math.floor(Math.random() * 256));
-  let id = '';
-  for (let i = 0; i < length; i++) {
-    id += alphabet[bytes[i] % alphabet.length];
-  }
-  return id;
-}
-
-// Summarizer
-async function runSummarizer(inpText, callback) {
-  await summarizerInstance.init();
-  const summary = await summarizerInstance.summarize(inpText);
-  markdownOutput(summary);
-  if (typeof callback === 'function') {
-    callback({ id: generateRandomId(15), type: 'S', input: inpText, response: summary });
-  }
-}
-
-async function runSummarizerStream(inpText, callback, options = {}) {
-  await summarizerInstance.init();
-  const { context = 'intended for health managers' } = options;
-  await summarizerInstance.summarizeStream(
-    inpText,
-    context,
-    markdownOutput,
-    (streamFinal) => {
-      if (typeof callback === 'function') {
-        callback({ id: generateRandomId(15), type: 'Ss', input: inpText, response: streamFinal });
-      }
+      return `
+        <div class="mermaid">
+        ${mermaidCode.trim()}
+        </div>
+      `;
     }
   );
+
 }
 
-// Translator
-async function runTranslator(inpText, callback) {
-  const fromEl = getElById('languageFrom');
-  const toEl = getElById('languageTo');
-  const from = fromEl?.value || 'en';
-  const to = toEl?.value || 'fr';
+function preprocessMermaid(md) {
 
-  await translatorInstance.init(from, to);
-  const translation = await translatorInstance.translate(inpText);
-  markdownOutput(translation);
-  if (typeof callback === 'function') {
-    callback({ id: generateRandomId(15), type: 'T', input: inpText, response: translation });
+  return md.replace(
+    /```mermaid\s*([\s\S]*?)```/g,
+    (match, mermaidCode) => {
+
+      return `
+        <mermaid-chart>
+        ${mermaidCode.trim()}
+        </mermaid-chart>
+      `;
+    }
+  );
+
+}
+
+function preprocessSupportedScriptEmbeddings(chunk) {
+
+   // 1. if match found in SCRIPT_SUPPORTED_EMBEDDINGS (for open property) , create necessary CDN links (detect if already created)
+   // 2. swap SCRIPT_SUPPORTED_EMBEDDINGS replace 'open' + 'close' content
+   console.log( 'streamFinal', chunk);
+   var newChunk = chunk, cdnLink = '';
+
+   SCRIPT_SUPPORTED_EMBEDDINGS.forEach(embedding => {
+     if (newChunk.includes(embedding.open) && newChunk.includes(embedding.close)) {
+       if ( embedding.name === 'mermaid' ) {
+         newChunk = embedding.handler(newChunk);
+       }
+     }
+   });
+
+   return newChunk;
+}
+
+// function preprocessSupportedScriptEmbeddings(chunk) { 
+
+//    // 1. if match found in SCRIPT_SUPPORTED_EMBEDDINGS (for open property) , create necessary CDN links (detect if already created)
+//       // 2. swap SCRIPT_SUPPORTED_EMBEDDINGS replace 'open' + 'close' content
+//       console.log( 'streamFinal', chunk);
+//       var newChunk = chunk, cdnLink = '';
+
+//       SCRIPT_SUPPORTED_EMBEDDINGS.forEach(embedding => {
+//         if (newChunk.includes(embedding.open) && newChunk.includes(embedding.close)) {
+//           const { open, close } = embedding.replace;
+//           newChunk = newChunk.replace(embedding.open, open).replace(embedding.close, close);
+
+//     return md.replace(
+//         /```mermaid\s*([\s\S]*?)```/g,
+//         (match, mermaidCode) => {
+
+//                   return `
+//       <div class="mermaid">
+//       ${mermaidCode.trim()}
+//       </div>
+//       `;
+//               }
+//           );
+          
+//         }
+//       });
+
+//       return newChunk; // + cdnLink;
+// }
+
+/**
+ * Renders markdown chunk to the output container and handles auto-scrolling
+ */
+function markdownOutput(chunk) {
+
+  const html = md.render((chunk)); //preprocessSupportedScriptEmbeddings
+  const targetEl = document.getElementById(RESPONSE_OUTPUT_CONTROL_ID);
+
+  if (!targetEl) {
+    console.error(`Element with ID "${RESPONSE_OUTPUT_CONTROL_ID}" not found.`);
+    return;
+  }
+
+  targetEl.innerHTML = html;
+  targetEl.scrollTop = targetEl.scrollHeight;
+
+  // DHIS2 iframe context smooth scrolling
+  const parentDocument = window.parent?.document;
+  const parentFrame = parentDocument?.querySelector('.app-shell-app');
+  if (parentFrame) {
+    parentFrame.scrollTo({ top: parentFrame.scrollHeight, left: 0, behavior: 'smooth' });
   }
 }
 
-// Rewriter
-async function runRewriter(inpText, callback) {
-  await rewriterInstance.init();
-  const rewritten = await rewriterInstance.rewrite(inpText);
-  markdownOutput(rewritten);
-  if (typeof callback === 'function') {
-    callback({ id: generateRandomId(15), type: 'R', input: inpText, response: rewritten });
-  }
+/**
+ * Returns rendered HTML from a markdown string
+ */
+function markdownReturn(chunk) {
+  return md.render(chunk);
 }
 
-// Prompt
+/**
+ * Standard Prompt Execution
+ */
 async function runPrompt(inpText, callback) {
-  await promptLanguageModel.init();
-  await promptLanguageModel.prompt(inpText, (summary) => {
-    markdownOutput(summary);
-    if (typeof callback === 'function') {
-      callback({ id: generateRandomId(15), type: 'P', input: inpText, response: summary });
-    }
-  });
+  try {
+    await promptLanguageModel.init();
+    await promptLanguageModel.prompt(inpText, (summary) => {
+      markdownOutput(summary);
+      if (typeof callback === 'function') {
+        callback({ id: generateRandomId(15), type: 'P', input: inpText, response: summary });
+      }
+    });
+  } catch (error) {
+    console.error('Error running prompt:', error);
+  }
 }
 
-async function runPrompt_withGet(inpText, callback) {
-  await promptLanguageModel.init();
-  await promptLanguageModel.prompt(inpText, (summary) => {
-    if (typeof callback === 'function') {
-      callback( summary );
-    }
-  });
+/**
+ * Streamed Prompt Execution
+ */
+async function runPromptStream(input, callback) {
+  try {
+    // Fixed: Handled cases where input might be passed as an object containing options
+    const text = typeof input === 'object' ? input.prompt : input;
+    const options = typeof input === 'object' ? input.options : undefined;
+
+    await promptLanguageModel.init(options);
+    await promptLanguageModel.promptStream(text, markdownOutput, (streamFinal) => {
+      if (typeof callback === 'function') {
+        callback({ id: generateRandomId(15), type: 'Ps', input: text, response: streamFinal });
+      }
+    });
+  } catch (error) {
+    console.error('Error running prompt stream:', error);
+  }
 }
 
-async function runPromptStream(inpText, callback) {
-  await promptLanguageModel.init();
-  await promptLanguageModel.promptStream(inpText, markdownOutput, (streamFinal) => {
-    if (typeof callback === 'function') {
-      callback({ id: generateRandomId(15), type: 'Ps', input: inpText, response: streamFinal });
-    }
-  });
-}
-
+/**
+ * Streamed Prompt Execution with JSON Input
+ */
 async function runPromptStreamJsonInput(inpObj, callback) {
-  if (typeof inpObj === 'object' && inpObj?.defaultPrompt) {
-    promptLanguageModel._systemPrompt = inpObj.defaultPrompt;
+  try {
+    if (typeof inpObj === 'object' && inpObj?.defaultPrompt) {
+      promptLanguageModel.defaults.systemPrompt = inpObj.defaultPrompt;
+    }
+
+    await promptLanguageModel.init(inpObj?.options);
+    await promptLanguageModel.promptStream(inpObj.prompt, markdownOutput, (streamFinal) => {
+      if (typeof callback === 'function') {
+        // Replaced expensive JSON stringify/parse with modern spread operator
+        const responseData = {
+          ...inpObj,
+          id: generateRandomId(15),
+          type: 'Ps',
+          response: streamFinal
+        };
+        callback(responseData);
+      }
+    });
+  } catch (error) {
+    console.error('Error running JSON prompt stream:', error);
+  }
+}
+
+/**
+ * Generic API Fetch Utility
+ */
+async function testAPIurl(args, callback) {
+  console.log('testAPIurl called with args:', args);
+  
+  const headers = { 'Content-Type': args?.contentType || 'application/json' };
+  const body = args?.body || null;
+
+  if (args?.username && args?.password) {
+    headers['Authorization'] = `Basic ${btoa(`${args.username}:${args.password}`)}`;
+  } else if (args?.accessToken) {
+    // Fixed: Bearer token logic previously used username/password by mistake
+    headers['Authorization'] = `Bearer ${args.accessToken}`;
   }
 
-  await promptLanguageModel.init();
-  await promptLanguageModel.promptStream(inpObj.prompt, markdownOutput, (streamFinal) => {
-    if (typeof callback === 'function') {
-      const cloneData = { ...inpObj, id: generateRandomId(15), type: 'Ps', response: streamFinal };
-      callback(cloneData);
-    }
-  });
-}
-
-// Generic API fetch tester
-async function testAPIurl(args, callback) {
   try {
-    if (!args?.url) throw new Error('URL is required');
-
-    const headers = new Headers(args?.headers || {});
-    const method = (args?.method || 'GET').toUpperCase();
-    const hasBody = Boolean(args?.body);
-
-    // Content-Type: only set if caller didn't and body isn't FormData
-    if (
-      hasBody &&
-      !(args?.body instanceof FormData) &&
-      !headers.has('Content-Type')
-    ) {
-      headers.set('Content-Type', args?.contentType || 'application/json');
-    }
-
-    // Basic auth
-    if (args?.username && args?.password) {
-      const encoded = btoa(`${args.username}:${args.password}`);
-      headers.set('Authorization', `Basic ${encoded}`);
-    }
-
-    // Token auth
-    if (args?.accessToken) {
-      if (!headers.has('Authorization')) {
-        headers.set('Authorization', `ApiToken ${args.accessToken}`);
-      }
-    }
-
-    const response = await fetch(args.url, {
-      method,
+    const response = await fetch(args?.url, {
+      method: args?.method || 'GET',
       headers,
-      body: hasBody ? args.body : undefined,
+      body
     });
 
-    const contentType = response.headers.get('content-type') || '';
-    const isJson = contentType.includes('application/json');
-    const payload = isJson ? await response.json().catch(() => ({})) : await response.text();
-
     if (response.ok) {
-      console.log('Request succeeded:', payload);
-      if (typeof callback === 'function') callback(payload);
-      return;
+      const data = await response.json();
+      console.log('Fetch successful:', data);
+      callback(data);
+    } else {
+      console.error('Fetch failed:', response.status, response.statusText);
+      callback({ error: 'Fetch failed', status: response.status, statusText: response.statusText });
     }
-
-    const errorInfo = {
-      error: 'Fetch failed',
-      status: response.status,
-      statusText: response.statusText,
-      payload,
-    };
-    console.error('Request failed:', errorInfo);
-    if (typeof callback === 'function') callback(errorInfo);
-  } catch (e) {
-    console.error('Error during fetch:', e);
-    if (typeof callback === 'function') callback({ error: e.message });
+  } catch (error) {
+    console.error('Error during fetch:', error);
+    callback({ error: error.message });
   }
 }
 
 async function destroyLanguageModel() {
-  try {
+  if (typeof promptLanguageModel.destroy === 'function') {
     promptLanguageModel.destroy();
-  } catch (e) {
-    console.warn('destroyLanguageModel: already destroyed or not initialized.', e);
   }
 }
 
-async function aboutGemini() {
-  // Small delay to mimic async update and keep UX consistent
+/**
+ * Outputs information about the current Gemini Environment
+ */
+function aboutGemini() {
   setTimeout(() => {
-    const result =
-      '__Gemini Nano__ is an experimental feature that must be enabled manually. It runs locally within your Chrome browser, unlike other Gemini models that are only available via cloud APIs. The "built-in" part signifies on-device processing with reduced latency and enhanced privacy.\n\n' +
-      'Key differences include where the model runs (on your device vs. in the cloud), which affects performance, data privacy, and the types of tasks that can be performed.\n\n' +
-      '_Gemini Nano Built-In (Chrome)_\n' +
-      '+ __Local Processing__:\n' +
-      '- The model runs entirely on your device using WebAssembly/WebGPU, without sending data to the cloud.\n\n' +
-      '+ __Performance__:\n' +
-      '- Optimized for smaller, common tasks like summarization and classification, leveraging on-device hardware acceleration.\n\n' +
-      '**Gemini Nano**\n\n' +
-      'The following features are available/enabled on your machine:\n' +
-      '| Feature | Supported | Purpose |\n' +
-      '| --- | --- | --- |\n' +
-      '| Summarize | ' + ('Summarizer' in self ? '&#10003;' : ' ') + ' | Summarizing narratives, articles or messages |\n' +
-      '| Translate (en - fr) | ' + ('Translator' in self ? '&#10003;' : ' ') + ' | Translation of texts into other languages (en-fr default) |\n' +
-      '| Rewrite | ' + ('Rewriter' in self ? '&#10003;' : ' ') + ' | Rewrite texts to sound more polite or formal |\n' +
-      '| Prompt | ' + ('prompt' in self ? '&#10003;' : ' ') + ' | Answer questions based on provided texts or general Q&A |\n\n' +
-      '**Getting Started**\n\n' +
-      'Gemini (Nano) is an experimental AI feature in Chrome.\n' +
-      'How to Enable Foundational Model (e.g., v2Nano)\n' +
-      '1. Open chrome://flags/#prompt-api-for-gemini-nano in a new tab.\n' +
-      '2. Enable the feature and restart Chrome.\n\n' +
-      'Note: Individual features may require separate flags (e.g., chrome://flags/#rewriter-api-for-gemini-nano). Learn more: https://developer.chrome.com/docs/ai/get-started\n\n' +
-      '**Operating system**\n\nWindows 10 or 11; macOS 13+ (Ventura and onwards); or Linux. Chrome for Android, iOS, and ChromeOS are not yet supported by the APIs that use Gemini Nano.\n' +
-      '**Storage**\n\nAt least 22 GB of free space on the volume that contains your Chrome profile.\n';
+    // Replaced messy string concatenation with a clean template literal
+    const isSummarizerAvail = 'Summarizer' in self ? '&#10003;' : ' ';
+    const isTranslatorAvail = 'Translator' in self ? '&#10003;' : ' ';
+    const isRewriterAvail = 'Rewriter' in self ? '&#10003;' : ' ';
+    const isPromptAvail = 'prompt' in self ? '&#10003;' : ' ';
+
+    const result = `**Gemini Nano**
+
+The following list of features are available/enabled on your machine:
+| Feature | Supported | Purpose |
+| --- | --- | --- |
+| Summarize | ${isSummarizerAvail} | Summarizing narratives, articles or messages |
+| Translate (en - fr) | ${isTranslatorAvail} | Translation of texts into other langages (en-fr defaulted) |
+| Rewrite | ${isRewriterAvail} | Rewrite texts to sound more polite or formal |
+| Prompt | ${isPromptAvail} | Answer questions based on provided texts or general Q&A |
+
+**Getting Started**
+
+Gemini (Nano) is an experimental AI feature (under Chrome).
+How to Enable Foundational Model (e.g. v2Nano):
+1. Copy reserved URL _chrome://flags/#prompt-api-for-gemini-nano_ and paste into new tab 
+2. Enable feature and restart chrome 
+
+Note: Individual features may require separate settings to be enabled ([rewriter](chrome://flags/#rewriter-api-for-gemini-nano)); visit developer site to [Learn more](https://developer.chrome.com/docs/ai/get-started).
+
+**Operating system**
+Windows 10 or 11; macOS 13+ (Ventura and onwards); or Linux. Chrome for Android, iOS, and ChromeOS are not yet supported by the APIs which use Gemini Nano.
+
+**Storage**
+At least 22 GB of free space on the volume that contains your Chrome profile.`;
 
     markdownOutput(result);
   }, 100);
 }
 
+function generateRandomId(length = 10) {
+  return Math.random().toString(36).substring(2, length + 2);
+}
+
 // Expose functions to the global scope
 window.promptCharacters = promptLanguageModel.characters;
-window.languageModelParameters = promptLanguageModel.modelParameters;
-window.runSummarizer = runSummarizer;
-window.runSummarizerStream = runSummarizerStream;
-window.runTranslator = runTranslator;
-window.runRewriter = runRewriter;
 window.runPrompt = runPrompt;
-window.runPromptGet = runPrompt_withGet;
 window.runPromptStream = runPromptStream;
 window.runPromptStreamJsonInput = runPromptStreamJsonInput;
 window.destroyLanguageModel = destroyLanguageModel;

@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js"></script>
   <script type="module" src="geminiApp.js"></script>
   <link href="style.css" rel="stylesheet">
 </head>
@@ -105,7 +106,7 @@
 
                   <!-- Input/Paste Markdown table -->
                   <div id="inputAPI" class="subtab-content hidden">
-                    <input type="text" id="url" class="w-full rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="URL" value="https://punkapi.online/v3/beers/random"></input>
+                    <input type="text" id="url" class="w-full rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="URL" value="https://punkapi.online/v3/beers/random">
 
                     <!-- <label class="flex items-center space-x-2 text-sm mt-4 mb-4 cursor-pointer">
                       <input type="checkbox" class="rgp rgq rha rhi rhj rhk rhn rig rii rik rim rin rio riq rir rit riv rjm" id="basicAuth">
@@ -116,18 +117,18 @@
                       <label for="option1" class="text-gray-700 pr-4">simple</label>
 
                       <input type="radio" id="option2" name="apiSecurity" value="basic" data-target="basic" class="apiSecurity form-radio text-blue-600" />
-                      <label for="option1" class="text-gray-700 pr-4">basic Auth</label>
+                      <label for="option2" class="text-gray-700 pr-4">basic Auth</label>
 
                       <input type="radio" id="option3" name="apiSecurity" value="token" data-target="token" class="apiSecurity form-radio text-blue-600" />
-                      <label for="option2" class="text-gray-700">access Token</label>
+                      <label for="option3" class="text-gray-700">access Token</label>
                     </div>
 
                     <div id="basic" class="hidden apiSecurity-target">
-                      <input type="text" id="username" class="w-100 rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Username"></input>
-                      <input type="password" id="password" class="w-100 rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Password"></input>
+                      <input type="text" id="username" class="w-full rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Username">
+                      <input type="password" id="password" class="w-full rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Password">
                     </div>
                     <div id="token" class="hidden apiSecurity-target">
-                      <input type="text" id="accessToken" class="w-10/12 rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Access Token"></input>
+                      <input type="text" id="accessToken" class="w-10/12 rounded-lg border-gray-300 mb-2 focus:ring-2 focus:ring-blue-500 p-3 text-sm" placeholder="Access Token">
                     </div>
 
                     <a id="testURL" class="text-gray-600 flex border rounded-lg mt-2 p-2 shadow-sm overflow-hidden max-h-8 max-w-20 content-center items-center text-xs cursor-pointer	">
@@ -176,8 +177,8 @@
       </form>
 
       <!-- Output Tab -->
-      <div id="outputTab" class="tab-content hidden">
-        <div id="responseOutput" class="gap-y-3 rounded-lg bg-gray-50 p-4 text-gray-800">
+      <div id="outputTab" class="tab-content hidden" style="height:75vh">
+        <div id="responseOutput" class="gap-y-3 rounded-lg bg-stone-50 p-4 text-gray-800 overflow-y-auto" style="height:75vh">
           Your generated output will appear here...
         </div>
       </div>
@@ -292,226 +293,178 @@
 
 
 
-    // note - move to geminiApp.js
     const appPrefix = 'geminiNanoBuiltInApp:';
     const timedResponses = true;
-    var lastRequest = null;
-    var idxCharacters = {};
+    let lastRequest = null;
+    const idxCharacters = {};
 
     async function submitToAI() {
 
-      // const action = document.getElementById('actionSelect').value;
-      const action = 'promptStream';
+      const promptObj = { defaultPrompt: 'You are a ' + idxCharacters[ document.getElementById('character').value ].name + '. Your style:' + idxCharacters[ document.getElementById('character').value ].style + '. Your tone: ' + idxCharacters[ document.getElementById('character').value ].tone + '. Your approach: ' + idxCharacters[ document.getElementById('character').value ].approach };
+      let promptText = '';
 
-      var promptObj = { defaultPrompt:  'You are a ' + idxCharacters[ document.getElementById('character').value ].name + '. Your style:' + idxCharacters[ document.getElementById('character').value ].style + '. Your tone: ' + idxCharacters[ document.getElementById('character').value ].tone + '. Your approach: ' + idxCharacters[ document.getElementById('character').value ].approach };
-      var promptText = '';
-    
-      const inputText = document.getElementById('pasteInput').getElementsByTagName( 'textarea' )[0].value || '';
-      const inputTable = document.getElementById('pasteInputTable').getElementsByTagName( 'textarea' )[0].value || '';
-      const inputPrompt = document.getElementById('promptInstructions').getElementsByTagName( 'textarea' )[0].value || '';
+      const inputText = document.getElementById('pasteInput').getElementsByTagName('textarea')[0].value || '';
+      const inputTable = document.getElementById('pasteInputTable').getElementsByTagName('textarea')[0].value || '';
+      const inputPrompt = document.getElementById('promptInstructions').getElementsByTagName('textarea')[0].value || '';
 
-      if ( inputText.length ) promptText += 'Context: ' + inputText + '\n\n';
-      if ( inputTable.length ) promptText += 'Context (supporting table data): ' + inputTable + '\n\n';
-      if ( inputPrompt.length ) promptText += 'Your instructions: ' + inputPrompt + '\n\n';
+      if (inputText.length) promptText += 'Context: ' + inputText + '\n\n';
+      if (inputTable.length) promptText += 'Context (supporting table data): ' + inputTable + '\n\n';
+      if (inputPrompt.length) promptText += 'Your instructions: ' + inputPrompt + '\n\n';
 
-      promptObj[ 'title' ] = inputPrompt;
-      // promptObj[ 'input' ] = promptText;
-      promptObj[ 'prompt' ] = promptText;
-      promptObj[ 'character' ] = document.getElementById('character').value;
+      promptObj['title'] = inputPrompt;
+      promptObj['prompt'] = promptText;
+      promptObj['character'] = document.getElementById('character').value;
 
       const output = document.getElementById('responseOutput');
       output.textContent = 'Thinking...';
 
-      if ( timedResponses ) lastRequest = Date.now();
-      console.log( 'promptObj', promptObj );
+      if (timedResponses) lastRequest = Date.now();
+      console.log('promptObj', promptObj);
 
-      document.getElementsByClassName( 'tabOutput' )[0].click();
+      document.getElementsByClassName('tabOutput')[0].click();
 
       setTimeout(() => {
-        
-        // if ( action === 'summarize' ) window.runSummarizer( inputText, submitToAIcompleted );
-        // if ( action === 'summarizeStream' ) window.runSummarizerStream( inputText, submitToAIcompleted );
-        // if ( action === 'translate' ) window.runTranslator( inputText, submitToAIcompleted );
-        // if ( action === 'rewrite' ) window.runRewriter( inputText, submitToAIcompleted );
-        // if ( action === 'prompt' ) window.runPrompt( inputText, submitToAIcompleted );
-        // if ( action === 'promptStream' ) window.runPromptStream( inputText, submitToAIcompleted );
-        if ( action === 'promptStream' ) window.runPromptStreamJsonInput( promptObj, submitToAIcompleted );
-
+        window.runPromptStreamJsonInput(promptObj, submitToAIcompleted);
       }, 1000);
     }
 
-    async function submitToAIcompleted( result ) {
+    async function submitToAIcompleted(result) {
 
-      console.log( 'submitToAIcompleted', result );
+      console.log('submitToAIcompleted', result);
 
-      if ( timedResponses ) result[ 'started' ] = lastRequest;
-      if ( timedResponses ) result[ 'completed' ] = Date.now();
+      if (timedResponses) result['started'] = lastRequest;
+      if (timedResponses) result['completed'] = Date.now();
 
-      const inputPrompt = document.getElementById('promptInstructions').getElementsByTagName( 'textarea' )[0].value || '';
-      var promptText = 'Summarize the following sentence/input into no more than 8 words: ' + inputPrompt;
+      const inputPrompt = document.getElementById('promptInstructions').getElementsByTagName('textarea')[0].value || '';
+      const promptText = 'Summarize the following sentence/input into no more than 8 words: ' + inputPrompt;
 
-      window.runPromptGet( promptText, ( newTitle ) => {
-    
-        result.title = newTitle || result.title;
-        addToHistoryList( result );
-        createActionButtonsForHistoryItemPreview( appPrefix + ':history:' + result.id, result );
+      // document
+      //   .querySelectorAll("mermaid-chart")
+      //   .forEach(el => {
 
-      });
+      //       const div = document.createElement("div");
 
-    
+      //       div.className = "mermaid";
+      //       div.textContent = el.textContent;
+
+      //       el.replaceWith(div);
+
+      // });
+
+      // mermaid.initialize({ startOnLoad: true });
+      // console.log('mermaid initialized', mermaid);
+      // await mermaid.run();
+
+      // idea: create summarizer string for "history"
+      // window.runPromptGet(promptText, (newTitle) => {
+      //   result.title = newTitle || result.title;
+      //   addToHistoryList(result);
+      //   createActionButtonsForHistoryItemPreview(appPrefix + ':history:' + result.id, result);
+      // });
+
     }
 
-    async function summariseLastPromptCompleted( result ) {
+    function addToHistoryList(result) {
 
-      console.log( 'summariseLastPromptCompleted', result );
-
-      // const lastPrompt = document.getElementById('promptInstructions').getElementsByTagName( 'textarea' )[0].value || '';
-
-      // if ( result && result.response && result.response.length ) {
-      //   document.getElementById('promptInstructions').getElementsByTagName( 'textarea' )[0].value = result.response;
-      // } else {
-      //   document.getElementById('promptInstructions').getElementsByTagName( 'textarea' )[0].value = lastPrompt;
-      // }
-
-    }
-    async function addToHistoryList( result ) {
-        
       const localID = appPrefix + ':history:' + result.id;
       const targ = document.getElementById('history');
       const tab = document.createElement('p');
 
-      localStorage.setItem( localID, JSON.stringify( result ) );
+      localStorage.setItem(localID, JSON.stringify(result));
 
       tab.className = 'btnTabHistory w-54 truncate bg-white border rounded-lg p-2 shadow-sm overflow-hidden max-h-10 content-center';
-      tab.setAttribute( 'id', localID );
-      tab.setAttribute( 'title', result.title );
-      tab.innerText = result.title.substring(0, 30) + ( result.title.length > 30 ? '...' : '' );
+      tab.setAttribute('id', localID);
+      tab.setAttribute('title', result.title);
+      tab.innerText = result.title.substring(0, 30) + (result.title.length > 30 ? '...' : '');
 
       targ.appendChild(tab);
 
       tab.addEventListener('click', function() {
-        readTab( result.id );
-        document.getElementsByClassName( 'tabOutput' )[0].click();
-        // output.innerHTML = window.markdownReturn( "```\n" + result.input + "\n" + "```\n" +  result.response );
+        readTab(result.id);
+        document.getElementsByClassName('tabOutput')[0].click();
         const output = document.getElementById('responseOutput');
-        output.innerHTML = "<div class='floatInput'>" + window.markdownReturn( result.prompt ) + "</div><div class='floatOutput flex flex-col gap-2'>" + window.markdownReturn( result.response ) + "<div id='AIresponseButtonRow'></div></div>";
-        createActionButtonsForHistoryItemPreview( localID, result );
+        output.innerHTML = "<div class='floatInput'>" + window.markdownReturn(result.prompt) + "</div><div class='floatOutput flex flex-col gap-2'>" + window.markdownReturn(result.response) + "<div id='AIresponseButtonRow'></div></div>";
+        createActionButtonsForHistoryItemPreview(localID, result);
       });
 
     }
 
-    async function clipboardCopy( result ) {
+    async function clipboardCopy(result) {
 
-      // const result = await readTab( appPrefix + id );
-
-      if ( !result ) {
-        console.error( 'No match found' );
+      if (!result) {
+        console.error('No match found');
         return;
       }
 
-      // const textToCopy = `Input: ${result.input}\nResponse: ${result.response}`;
-      const textToCopy = result.response;
-
-      if ( navigator.clipboard ) {
-        try{ 
-
-            navigator.clipboard.writeText(textToCopy)
-              .then(() => {
-                console.log('Text copied to clipboard');
-              })
-              .catch(err => {
-                console.error('Failed to copy text: ', err);
-              });
+      if (navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(result.response);
+          console.log('Text copied to clipboard');
         } catch (err) {
           console.error('Failed to copy text: ', err);
         }
       } else {
-        console.error('Clipboard not available' );
+        console.error('Clipboard not available');
       }
 
     }
 
-    async function createActionButtonsForHistoryItemPreview( id, result ) {
+    function createActionButtonsForHistoryItemPreview(id, result) {
 
-      console.log( 'createActionButtonsForHistoryItemPreview', id );
+      console.log('createActionButtonsForHistoryItemPreview', id);
 
       const targ = document.getElementById('responseOutput');
-
       const buttonRow = document.createElement('div');
       buttonRow.className = 'px-4 py-2 flex flex-row gap-4';
 
-      // delete button (remove tab + content + stored entry)
       const clipboardButton = document.createElement('button');
-
       clipboardButton.className = 'px-4 py-4 font-semibold flex flex-row text-sm bg-gray-100 mb-4 mt-6 text-stone-800 rounded-2xl shadow-sm w-40 hover:shadow-lg';
       clipboardButton.innerHTML = '<i data-lucide="copy" class="w-4 h-4 mx-4 text-purple-600"></i>markdown';
-      clipboardButton.onclick = function() {
-        clipboardCopy( result );
-      };
-
+      clipboardButton.onclick = function() { clipboardCopy(result); };
       buttonRow.appendChild(clipboardButton);
 
-      // delete button (remove tab + content + stored entry)
       const deleteButton = document.createElement('button');
-
       deleteButton.className = 'px-4 py-2 font-semibold text-sm bg-gray-100 mb-4 mt-6 text-stone-800 rounded-2xl shadow-sm w-40 hover:shadow-lg';
       deleteButton.innerText = 'Delete';
-      deleteButton.onclick = function() {
-        deleteHistoryItem( id );
-      };
-
+      deleteButton.onclick = function() { deleteHistoryItem(id); };
       buttonRow.appendChild(deleteButton);
 
       targ.appendChild(buttonRow);
-
       lucide.createIcons();
 
     }
 
-    async function readAllStoredPrompts() {
+    function readAllStoredPrompts() {
 
-      var arrStoredSearches = [];
+      const arrStoredSearches = [];
 
-      for ( let i = 0; i < localStorage.length; i++ ) {
-
+      for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if ( key.startsWith( appPrefix ) ) {
-          const result = JSON.parse( localStorage.getItem( key ) );
-          arrStoredSearches.push( result )
+        if (key.startsWith(appPrefix)) {
+          arrStoredSearches.push(JSON.parse(localStorage.getItem(key)));
         }
       }
 
-      arrStoredSearches.sort( (a,b) => a.completed < b.completed ? -1 : 1 );
-
-      for ( let i = 0; i < arrStoredSearches.length; i++ ) {
-
-        addToHistoryList( arrStoredSearches[ i ] );
-
-      }
+      arrStoredSearches.sort((a, b) => a.completed < b.completed ? -1 : 1);
+      arrStoredSearches.forEach(result => addToHistoryList(result));
 
     }
 
-    async function readTab( id ) {
-
-      return JSON.parse( localStorage.getItem( id ) );
-
+    function readTab(id) {
+      return JSON.parse(localStorage.getItem(id));
     }
 
-    async function deleteHistoryItem( id ) {
+    function deleteHistoryItem(id) {
 
-      localStorage.removeItem( id );
-
-      document.getElementById( id ).remove();
+      localStorage.removeItem(id);
+      document.getElementById(id).remove();
 
       const output = document.getElementById('responseOutput');
 
       setTimeout(() => {
-
-        // let result =  `✅ done`;
-        let result =  `
-        <div id="notification" class="max-w-sm w-full bg-white shadow-lg rounded-2xl m-4 p-4 flex  transition transform translate-y-0 opacity-100">
+        output.innerHTML = `
+        <div id="notification" class="max-w-sm w-full bg-white shadow-lg rounded-2xl m-4 p-4 flex transition transform translate-y-0 opacity-100">
           <div class="flex my-auto h-6 w-6">
-            <!-- Icon -->
             <svg class="h-6 w-6 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
             </svg>
@@ -521,91 +474,79 @@
           </div>
           <button onclick="document.getElementById('notification').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 flex h-8 w-6 mt-0">✕</button>
         </div>`;
-        output.innerHTML = result; //window.markdownReturn( result );
-
       }, 200);
 
     }
 
 
-    document.getElementById( 'submit' ).onclick = function() {
-        submitToAI();
+    document.getElementById('submit').onclick = function() {
+      submitToAI();
     };
 
-    document.getElementById( 'testURL' ).onclick = function() {
-      
-      var url = document.getElementById('url').value || '';
-      var username = document.getElementById('username').value || '';
-      var password = document.getElementById('password').value || '';
-      var apiSecurity = document.querySelector('input[type="radio"][name="apiSecurity"]:checked').value; // simple basic token
-      var useBasic = apiSecurity === 'basic' ? true : false; 
+    document.getElementById('testURL').onclick = function() {
 
-      var args = { url: url };
+      const url = document.getElementById('url').value || '';
+      const username = document.getElementById('username').value || '';
+      const password = document.getElementById('password').value || '';
+      const apiSecurity = document.querySelector('input[type="radio"][name="apiSecurity"]:checked').value;
 
-      if ( url.length ) {
+      const args = { url };
 
-        if ( apiSecurity === 'token' ) {
-          var accessToken = document.getElementById('accessToken').value || '';
-          if ( accessToken.length ) args[ 'accessToken' ] = accessToken;
-        }
-        else if ( apiSecurity === 'simple' ) {
-          // no extra args
-        }
-        else if ( apiSecurity === 'basic' ) {
-          if ( username.length ) args[ 'username' ] = username;
-          if ( password.length ) args[ 'password' ] = password;
+      if (url.length) {
+
+        if (apiSecurity === 'token') {
+          const accessToken = document.getElementById('accessToken').value || '';
+          if (accessToken.length) args['accessToken'] = accessToken;
+        } else if (apiSecurity === 'basic') {
+          if (username.length) args['username'] = username;
+          if (password.length) args['password'] = password;
         }
 
-        document.getElementById( 'testURL' ).getElementsByTagName( 'svg' )[0].classList.add( 'hidden' );
-        document.getElementById( 'testURL' ).getElementsByTagName( 'svg' )[1].classList.remove( 'hidden' );
+        const svgs = document.getElementById('testURL').getElementsByTagName('svg');
+        svgs[0].classList.add('hidden');
+        svgs[1].classList.remove('hidden');
 
         setTimeout(() => {
-          
-          window.testAPIurl( args, ( result ) => {
-            // alert( JSON.stringify( result ) );
-            document.getElementById('pasteInput').getElementsByTagName( 'textarea' )[0].value = JSON.stringify( result, null, 2 );
-            document.getElementsByClassName( 'subtab-btn' )[0].click();
-            document.getElementsByClassName( 'subtab-btn' )[0].scrollTop = document.getElementsByClassName( 'subtab-btn' )[0].scrollHeight;
-
-            document.getElementById( 'testURL' ).getElementsByTagName( 'svg' )[0].classList.remove( 'hidden' );
-            document.getElementById( 'testURL' ).getElementsByTagName( 'svg' )[1].classList.add( 'hidden' );
+          window.testAPIurl(args, (result) => {
+            document.getElementById('pasteInput').getElementsByTagName('textarea')[0].value = JSON.stringify(result, null, 2);
+            document.getElementsByClassName('subtab-btn')[0].click();
+            svgs[0].classList.remove('hidden');
+            svgs[1].classList.add('hidden');
           });
-          
         }, 750);
-        
+
       } else {
-        alert( 'Please enter a URL to test' );
+        alert('Please enter a URL to test');
       }
 
     };
-    
-    document.getElementById( 'aboutGemini' ).onclick = function() {
-        window.aboutGemini();
-        document.getElementsByClassName( 'tabOutput' )[0].click();
+
+    document.getElementById('aboutGemini').onclick = function() {
+      window.aboutGemini();
+      document.getElementsByClassName('tabOutput')[0].click();
     };
 
 
-    readAllStoredPrompts()
+    readAllStoredPrompts();
 
     setTimeout(() => {
 
-      const select = document.getElementById("character");
-      
-      window.promptCharacters.forEach( (char,i) => {
-        const option = document.createElement("option");
+      const select = document.getElementById('character');
+
+      window.promptCharacters.forEach((char, i) => {
+        const option = document.createElement('option');
         option.value = char.id;
-        option.textContent = char.name + " (" + char.style + ")";
+        option.textContent = char.name + ' (' + char.style + ')';
         select.appendChild(option);
-        if ( i === 0 ) option.selected = true;
-        idxCharacters[ char.id ] = char;
+        if (i === 0) option.selected = true;
+        idxCharacters[char.id] = char;
       });
 
       select.onchange = function() {
         window.destroyLanguageModel();
       };
 
-    }, 1000 );
-
+    }, 1000);
 
 </script>
 
